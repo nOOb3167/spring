@@ -16,7 +16,6 @@ void ProfileDrawer::SetEnabled(bool enable)
 	if (enable) {
 		assert(instance == NULL);
 		instance = new ProfileDrawer();
-		GML_STDMUTEX_LOCK_NOPROF(time); // SetEnabled
 		// reset peak indicators each time the drawer is restarted
 		std::map<std::string, CTimeProfiler::TimeRecord>::iterator pi;
 		for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi)
@@ -40,7 +39,6 @@ static const float start_y = 0.965f;
 
 void ProfileDrawer::Draw()
 {
-	GML_STDMUTEX_LOCK_NOPROF(time); // Draw
 
 	// draw the background of the window
 	glDisable(GL_TEXTURE_2D);
@@ -60,11 +58,7 @@ void ProfileDrawer::Draw()
 	int y = 0;
 	font->Begin();
 	for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi, ++y) {
-#if GML_MUTEX_PROFILER
-		const float fStartY = start_y - y * 0.018f;
-#else
 		const float fStartY = start_y - y * 0.024f;
-#endif
 		const float s = pi->second.total.toSecsf();
 		const float p = pi->second.percent * 100;
 		float fStartX = start_x + 0.005f + 0.015f + 0.005f;
@@ -139,7 +133,6 @@ void ProfileDrawer::Draw()
 
 bool ProfileDrawer::MousePress(int x, int y, int button)
 {
-	GML_STDMUTEX_LOCK_NOPROF(time); // MousePress
 
 	const float mx = MouseX(x);
 	const float my = MouseY(y);
@@ -165,7 +158,6 @@ bool ProfileDrawer::MousePress(int x, int y, int button)
 
 bool ProfileDrawer::IsAbove(int x, int y)
 {
-	GML_STDMUTEX_LOCK_NOPROF(time); // IsAbove
 
 	const float mx = MouseX(x);
 	const float my = MouseY(y);

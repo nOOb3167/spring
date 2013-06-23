@@ -435,11 +435,7 @@ void CProjectileDrawer::DrawProjectile(CProjectile* pro, bool drawReflection, bo
 {
 	const CUnit* owner = pro->owner();
 
-	if (GML::SimEnabled()) {
-		pro->drawPos = pro->pos + (pro->speed * (spring_tomsecs(globalRendering->lastFrameStart)*1.0f - pro->lastProjUpdate*1.0f) * globalRendering->weightedSpeedFactor);
-	} else {
-		pro->drawPos = pro->pos + (pro->speed * globalRendering->timeOffset);
-	}
+	pro->drawPos = pro->pos + (pro->speed * globalRendering->timeOffset);
 
 	const bool visible = (gu->spectatingFullView || loshandler->InLos(pro, gu->myAllyTeam) || (owner && teamHandler->Ally(owner->allyteam, gu->myAllyTeam)));
 
@@ -517,8 +513,6 @@ void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
 
 void CProjectileDrawer::DrawProjectilesMiniMap()
 {
-	GML_RECMUTEX_LOCK(proj); // DrawProjectilesMiniMap
-
 	typedef std::set<CProjectile*> ProjectileSet;
 	typedef std::set<CProjectile*>::const_iterator ProjectileSetIt;
 	typedef std::map<int, ProjectileSet> ProjectileBin;
@@ -623,8 +617,6 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	ISky::SetupFog();
 
 	{
-		GML_STDMUTEX_LOCK(rpiece); // Draw
-
 		projectileHandler->flyingPieces3DO.delete_delayed();
 		projectileHandler->flyingPieces3DO.add_delayed();
 		projectileHandler->flyingPiecesS3O.delete_delayed();
@@ -639,8 +631,6 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	Update();
 
 	{
-		GML_RECMUTEX_LOCK(proj); // Draw
-
 		unitDrawer->SetupForUnitDrawing();
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
@@ -714,7 +704,6 @@ void CProjectileDrawer::DrawShadowPass()
 	CProjectile::va->Initialize();
 
 	{
-		GML_RECMUTEX_LOCK(proj); // DrawShadowPass
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			DrawProjectilesShadow(modelType);
@@ -809,7 +798,6 @@ void CProjectileDrawer::DrawGroundFlashes()
 	glFogfv(GL_FOG_COLOR, black);
 
 	{
-		GML_STDMUTEX_LOCK(rflash); // DrawGroundFlashes
 
 		projectileHandler->groundFlashes.delete_delayed();
 		projectileHandler->groundFlashes.add_delayed();
@@ -987,9 +975,6 @@ void CProjectileDrawer::GenerateNoiseTex(unsigned int tex, int size)
 void CProjectileDrawer::RenderProjectileCreated(const CProjectile* p)
 {
 	texturehandlerS3O->UpdateDraw();
-
-	if (GML::SimEnabled() && !GML::ShareLists() && p->model && TEX_TYPE(p) < 0)
-		TEX_TYPE(p) = texturehandlerS3O->LoadS3OTextureNow(p->model);
 
 	if (p->model) {
 		modelRenderers[MDL_TYPE(p)]->AddProjectile(p);

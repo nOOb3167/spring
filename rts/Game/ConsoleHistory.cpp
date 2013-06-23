@@ -1,7 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "lib/gml/gmlmut.h"
-
 
 #include "ConsoleHistory.h"
 
@@ -25,7 +23,6 @@ CConsoleHistory::~CConsoleHistory()
 
 void CConsoleHistory::ResetPosition()
 {
-	GML_STDMUTEX_LOCK(hist); // ResetPosition
 
 	pos = lines.end();
 	return;
@@ -34,7 +31,6 @@ void CConsoleHistory::ResetPosition()
 
 bool CConsoleHistory::AddLine(const std::string& msg)
 {
-	GML_STDMUTEX_LOCK(hist); // AddLine
 
 	std::string message;
 	if ((msg.find_first_of("aAsS") == 0) && (msg[1] == ':')) {
@@ -72,7 +68,6 @@ bool CConsoleHistory::AddLineRaw(const std::string& msg)
 
 std::string CConsoleHistory::NextLine(const std::string& current)
 {
-	GML_STDMUTEX_LOCK(hist); // NextLine
 
 	std::string prefix, message;
 	if ((current.find_first_of("aAsS") == 0) && (current[1] == ':')) {
@@ -111,7 +106,6 @@ std::string CConsoleHistory::NextLine(const std::string& current)
 
 std::string CConsoleHistory::PrevLine(const std::string& current)
 {
-	GML_STDMUTEX_LOCK(hist); // PrevLine
 
 	std::string prefix, message;
 	if ((current.find_first_of("aAsS") == 0) && (current[1] == ':')) {

@@ -119,7 +119,6 @@ void CLuaUI::FreeHandler()
 CLuaUI::CLuaUI()
 : CLuaHandle("LuaUI", LUA_HANDLE_ORDER_UI, true)
 {
-	GML::SetLuaUIState(L_Sim);
 	luaUI = this;
 
 	BEGIN_ITERATE_LUA_STATES();
@@ -244,7 +243,6 @@ CLuaUI::~CLuaUI()
 		KillLua();
 	}
 	luaUI = NULL;
-	GML::SetLuaUIState(NULL);
 }
 
 void CLuaUI::InitLuaSocket(lua_State* L) {
@@ -405,9 +403,6 @@ void CLuaUI::ShockFront(float power, const float3& pos, float areaOfEffect, floa
 	if (areaOfEffect < shockFrontMinArea && !distadj) {
 		return;
 	}
-#if defined(USE_GML) && GML_ENABLE_SIM
-	float shockFrontDistAdj = (GML::Enabled() && distadj) ? *distadj : this->shockFrontDistAdj;
-#endif
 	float3 gap = (camera->GetPos() - pos);
 	float dist = gap.Length() + shockFrontDistAdj;
 
@@ -453,7 +448,6 @@ void CLuaUI::ExecuteUIEventBatch() {
 
 	std::vector<LuaUIEvent> lleb;
 	{
-		GML_STDMUTEX_LOCK(llbatch); // ExecuteUIEventBatch
 
 		if(luaUIEventBatch.empty())
 			return;
@@ -461,8 +455,6 @@ void CLuaUI::ExecuteUIEventBatch() {
 		luaUIEventBatch.swap(lleb);
 	}
 
-	GML_SELECT_LUA_STATE();
-	GML_DRCMUTEX_LOCK(lua); // ExecuteUIEventBatch
 
 	if(Threading::IsSimThread())
 		Threading::SetBatchThread(false);
@@ -486,7 +478,6 @@ void CLuaUI::ExecuteUIEventBatch() {
 bool CLuaUI::HasLayoutButtons()
 {
 	SELECT_LUA_STATE();
-	GML_DRCMUTEX_LOCK(lua); // HasLayoutButtons
 
 	lua_checkstack(L, 2);
 
@@ -520,9 +511,6 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 	buttonList.clear();
 	menuName = "";
 
-	GML_THRMUTEX_LOCK(unit, GML_DRAW); // LayoutButtons
-	GML_THRMUTEX_LOCK(feat, GML_DRAW); // LayoutButtons
-//	GML_THRMUTEX_LOCK(proj, GML_DRAW); // LayoutButtons
 
 	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 6);
@@ -830,13 +818,6 @@ bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
 bool CLuaUI::HasUnsyncedXCall(lua_State* srcState, const string& funcName)
 {
 	SELECT_LUA_STATE();
-#if (LUA_MT_OPT & LUA_MUTEX)
-	if (GML::Enabled() && srcState != L && SingleState()) {
-		GML_STDMUTEX_LOCK(xcall); // HasUnsyncedXCall
-
-		return unsyncedXCalls.find(funcName) != unsyncedXCalls.end();
-	}
-#endif
 
 	lua_getglobal(L, funcName.c_str());
 	const bool haveFunc = lua_isfunction(L, -1);
@@ -847,37 +828,6 @@ bool CLuaUI::HasUnsyncedXCall(lua_State* srcState, const string& funcName)
 
 int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 {
-#if (LUA_MT_OPT & LUA_MUTEX)
-	if (GML::Enabled()) {
-		SELECT_UNSYNCED_LUA_STATE();
-		if (srcState != L) {
-			DelayDataDump ddmp;
-
-			LuaUtils::ShallowDataDump sdd;
-			sdd.type = LUA_TSTRING;
-			sdd.data.str = new std::string;
-			*sdd.data.str = funcName;
-
-			ddmp.data.push_back(sdd);
-
-			LuaUtils::Backup(ddmp.dump, srcState, lua_gettop(srcState));
-
-			lua_settop(srcState, 0);
-
-			GML_STDMUTEX_LOCK(scall); // UnsyncedXCall
-
-			delayedCallsFromSynced.push_back(DelayDataDump());
-
-			DelayDataDump &ddb = delayedCallsFromSynced.back();
-			ddb.data.swap(ddmp.data);
-			ddb.dump.swap(ddmp.dump);
-			ddb.xcall = true;
-
-			return 0;
-		}
-	}
-#endif
-
 	LUA_CALL_IN_CHECK(L, 0);
 	const LuaHashString funcHash(funcName);
 	if (!funcHash.GetGlobalFunc(L)) {
@@ -950,30 +900,6 @@ int CLuaUI::SetShockFrontFactors(lua_State* L)
 
 int CLuaUI::UpdateUnsyncedXCalls(lua_State* L)
 {
-#if (LUA_MT_OPT & LUA_MUTEX)
-	if (!GML::Enabled() || !SingleState() || L != L_Sim)
-#endif
-		return 0;
-
-	GML_STDMUTEX_LOCK(xcall); // UpdateUnsyncedXCalls
-
-	unsyncedXCalls.clear();
-
-	for (lua_pushnil(L); lua_next(L, LUA_GLOBALSINDEX) != 0; lua_pop(L, 1)) {
-		const int ktype = lua_type(L, -2);
-		const int vtype = lua_type(L, -1);
-		if (ktype == LUA_TSTRING && vtype == LUA_TFUNCTION) {
-			size_t len = 0;
-			const char* data = lua_tolstring(L, -2, &len);
-			if (len > 0) {
-				std::string name;
-				name.resize(len);
-				memcpy(&name[0], data, len);
-				unsyncedXCalls.insert(name);
-			}
-		}
-	}
-
 	return 0;
 }
 

@@ -15,10 +15,7 @@
 #include "System/Exceptions.h"
 #include "System/GlobalConfig.h"
 #include "System/myMath.h"
-#include "lib/gml/gml_base.h"
 
-
-CONFIG(bool, EnableUnsafeAndBrokenMT).defaultValue(false).description("Enable unsafe MT modes (very likely to cause crashes / hangs / graphical errors)");
 
 CModInfo modInfo;
 
@@ -53,38 +50,9 @@ void CModInfo::Init(const char* modArchive)
 	{
 		// system
 		const LuaTable& system = root.SubTable("system");
-		const size_t numThreads = std::max(0, configHandler->GetInt("MultiThreadCount"));
-
-		bool disableGML = (numThreads == 1);
 
 		pathFinderSystem = system.GetInt("pathFinderSystem", PFS_TYPE_DEFAULT) % PFS_NUM_TYPES;
-		luaThreadingModel = system.GetInt("luaThreadingModel", MT_LUA_SINGLE_BATCH);
 
-		//FIXME: remove unsave modes
-		if (luaThreadingModel > 2) {
-			LOG_L(L_WARNING, "Experimental luaThreadingModel %d selected! This is currently unmaintained and may be deprecated and/or removed in the future!", luaThreadingModel);
-			LOG_L(L_WARNING, "Automaticly disabled to prevent desyncs / crashes / hangs / graphical errors!");
-			if (!configHandler->GetBool("EnableUnsafeAndBrokenMT")) {
-				luaThreadingModel = 2;
-			} else {
-				LOG_L(L_WARNING, "MT enforced: expect desyncs / crashes / hangs / graphical errors!");
-			}
-		}
-
-		if (numThreads == 0) {
-			if (Threading::GetAvailableCores() <= 1     ) disableGML = true;
-			if (luaThreadingModel == MT_LUA_NONE        ) disableGML = true;
-			if (luaThreadingModel == MT_LUA_SINGLE      ) disableGML = true;
-			if (luaThreadingModel == MT_LUA_SINGLE_BATCH) disableGML = true;
-		}
-
-		if (disableGML) {
-			// single core, or this game did not make any effort to
-			// specifically support MT ==> disable it by default
-			GML::Enable(false);
-		}
-
-		GML::SetCheckCallChain(globalConfig->GetMultiThreadLua() == MT_LUA_SINGLE_BATCH);
 	}
 
 	{

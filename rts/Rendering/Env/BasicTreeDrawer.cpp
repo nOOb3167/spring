@@ -367,9 +367,6 @@ void CBasicTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 	CBasicTreeSquareDrawer drawer(this, cx, cy, treeDistance * SQUARE_SIZE * TREE_SQUARE_SIZE);
 
-	GML_RECMUTEX_LOCK(feat); // Draw
-	GML_STDMUTEX_LOCK(tree); // Draw
-
 	readmap->GridVisibility (camera, TREE_SQUARE_SIZE, drawer.treeDistance * 2.0f, &drawer);
 
 	const int startClean = lastListClean * 20 % nTrees;
@@ -419,7 +416,6 @@ void CBasicTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 void CBasicTreeDrawer::Update()
 {
-	GML_STDMUTEX_LOCK(tree); // Update
 
 }
 
@@ -440,7 +436,6 @@ void CBasicTreeDrawer::ResetPos(const float3& pos)
 
 void CBasicTreeDrawer::AddTree(int treeID, int treeType, const float3& pos, float size)
 {
-	GML_STDMUTEX_LOCK(tree); // AddTree
 
 	TreeStruct ts;
 
@@ -459,7 +454,6 @@ void CBasicTreeDrawer::AddTree(int treeID, int treeType, const float3& pos, floa
 
 void CBasicTreeDrawer::DeleteTree(int treeID, const float3& pos)
 {
-	GML_STDMUTEX_LOCK(tree); // DeleteTree
 
 	const int treeSquareSize = SQUARE_SIZE * TREE_SQUARE_SIZE;
 	const int treeSquareIdx =

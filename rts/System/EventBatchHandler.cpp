@@ -49,7 +49,6 @@ void EventBatchHandler::UpdateUnits() {
 	unitMovedEventBatch.delay();
 }
 void EventBatchHandler::UpdateDrawUnits() {
-	GML_STDMUTEX_LOCK(runit); // UpdateDrawUnits
 
 	unitCreatedDestroyedEventBatch.execute();
 	unitCloakStateChangedEventBatch.execute();
@@ -72,7 +71,6 @@ void EventBatchHandler::UpdateFeatures() {
 	featureMovedEventBatch.delay();
 }
 void EventBatchHandler::UpdateDrawFeatures() {
-	GML_STDMUTEX_LOCK(rfeat); // UpdateDrawFeatures
 
 	featureCreatedDestroyedEventBatch.execute();
 	featureMovedEventBatch.execute();
@@ -91,7 +89,6 @@ void EventBatchHandler::UpdateProjectiles() {
 	unsyncedProjectileCreatedDestroyedEventBatch.delay_add();
 }
 void EventBatchHandler::UpdateDrawProjectiles() {
-	GML_STDMUTEX_LOCK(rproj); // UpdateDrawProjectiles
 
 	projectileHandler->syncedRenderProjectileIDs.delete_delayed();
 	syncedProjectileCreatedDestroyedEventBatch.delete_delayed();
@@ -113,24 +110,18 @@ void EventBatchHandler::DeleteSyncedProjectiles() {
 
 void EventBatchHandler::UpdateObjects() {
 	{ 
-		GML_STDMUTEX_LOCK(runit); // UpdateObjects
 
 		UpdateUnits();
 	}
 	{
-		GML_STDMUTEX_LOCK(rfeat); // UpdateObjects
 
 		UpdateFeatures();
 	}
 	{
-		GML_STDMUTEX_LOCK(rproj); // UpdateObjects
 
 		UpdateProjectiles();
 	}
 }
 
 void EventBatchHandler::LoadedModelRequested() {
-	// Make sure the requested model is available to the calling thread
-	if (GML::SimEnabled() && GML::ShareLists() && !GML::IsSimThread()) 
-		texturehandlerS3O->UpdateDraw();
 }

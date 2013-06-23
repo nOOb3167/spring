@@ -3,11 +3,6 @@
 #ifndef LOG_OUTPUT_H
 #define LOG_OUTPUT_H
 
-#include "lib/gml/gmlcnf.h"
-#if defined(USE_GML) && GML_ENABLE_SIM
-#include <boost/thread/mutex.hpp>
-#endif
-
 #include <string>
 #include <vector>
 

@@ -5,7 +5,6 @@
 #include <cstring>
 #include <boost/unordered_map.hpp>
 
-#include "lib/gml/gmlmut.h"
 #include "System/Log/ILog.h"
 #include "System/UnsyncedRNG.h"
 
@@ -126,7 +125,6 @@ CTimeProfiler::~CTimeProfiler()
 
 void CTimeProfiler::Update()
 {
-	GML_STDMUTEX_LOCK_NOPROF(time); // Update
 
 	++currentPosition;
 	currentPosition &= TimeRecord::frames_size-1;
@@ -158,14 +156,12 @@ void CTimeProfiler::Update()
 
 float CTimeProfiler::GetPercent(const char* name)
 {
-	GML_STDMUTEX_LOCK_NOPROF(time); // GetTimePercent
 
 	return profile[name].percent;
 }
 
 void CTimeProfiler::AddTime(const std::string& name, const spring_time time, const bool showGraph)
 {
-	GML_STDMUTEX_LOCK_NOPROF(time); // AddTime
 
 	std::map<std::string, TimeRecord>::iterator pi;
 	if ( (pi = profile.find(name)) != profile.end() ) {

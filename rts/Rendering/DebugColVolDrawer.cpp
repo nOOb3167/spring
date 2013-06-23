@@ -253,8 +253,7 @@ namespace DebugColVolDrawer
 
 	void Draw()
 	{
-		// DebugColVolDrawer is not thread-safe
-		if (GML::Enabled() || !enable)
+		if (!enable)
 			return;
 
 		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);

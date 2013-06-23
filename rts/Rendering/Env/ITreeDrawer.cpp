@@ -93,8 +93,6 @@ void ITreeDrawer::Draw(bool drawReflection)
 
 void ITreeDrawer::Update() {
 
-	GML_STDMUTEX_LOCK(tree); // Update
-
 	std::vector<GLuint>::iterator i;
 	for (i = delDispLists.begin(); i != delDispLists.end(); ++i) {
 		glDeleteLists(*i, 1);

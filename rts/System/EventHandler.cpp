@@ -287,28 +287,14 @@ void CEventHandler::Load(IArchive* archive)
 }
 
 
-#ifdef USE_GML
-	#define GML_DRAW_CALLIN_SELECTOR() if(!globalConfig->enableDrawCallIns) return
-#else
-	#define GML_DRAW_CALLIN_SELECTOR()
-#endif
-
-#define GML_CALLIN_MUTEXES() \
-	GML_THRMUTEX_LOCK(feat, GML_DRAW); \
-	GML_THRMUTEX_LOCK(unit, GML_DRAW)/*; \
-	GML_THRMUTEX_LOCK(proj, GML_DRAW)*/
-
-
 #define EVENTHANDLER_CHECK(name, ...) \
 	const int count = list ## name.size(); \
 	if (count <= 0) \
 		return __VA_ARGS__; \
-	GML_CALLIN_MUTEXES()
 
 
 void CEventHandler::Update()
 {
-	GML_DRAW_CALLIN_SELECTOR();
 
 	EVENTHANDLER_CHECK(Update);
 
@@ -394,7 +380,6 @@ void CEventHandler::GameProgress(int gameFrame)
 #define DRAW_CALLIN(name)                         \
   void CEventHandler:: Draw ## name ()            \
   {                                               \
-    GML_DRAW_CALLIN_SELECTOR();                   \
 		                                          \
     EVENTHANDLER_CHECK(Draw ## name);             \
                                                   \
@@ -496,7 +481,6 @@ int CEventHandler::MouseRelease(int x, int y, int button)
 	}
 	else
 	{
-		GML_CALLIN_MUTEXES();
 
 		const int retval = mouseOwner->MouseRelease(x, y, button);
 		mouseOwner = NULL;
@@ -511,7 +495,6 @@ bool CEventHandler::MouseMove(int x, int y, int dx, int dy, int button)
 		return false;
 	}
 
-	GML_CALLIN_MUTEXES();
 
 	return mouseOwner->MouseMove(x, y, dx, dy, button);
 }

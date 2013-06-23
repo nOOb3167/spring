@@ -40,8 +40,6 @@ CS3OTextureHandler::CS3OTextureHandler()
 {
 	s3oTextures.push_back(new S3oTex());
 	s3oTextures.push_back(new S3oTex());
-	if (GML::SimEnabled() && GML::ShareLists())
-		DoUpdateDraw();
 }
 
 CS3OTextureHandler::~CS3OTextureHandler()
@@ -54,12 +52,11 @@ CS3OTextureHandler::~CS3OTextureHandler()
 }
 
 void CS3OTextureHandler::LoadS3OTexture(S3DModel* model) {
-	model->textureType = GML::SimEnabled() && !GML::ShareLists() && GML::IsSimThread() ? -1 : LoadS3OTextureNow(model);
+	model->textureType = LoadS3OTextureNow(model);
 }
 
 int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 {
-	GML_RECMUTEX_LOCK(model); // LoadS3OTextureNow
 	LOG("Load S3O texture now (Flip Y Axis: %s, Invert Team Alpha: %s)",
 			model->flipTexY ? "yes" : "no",
 			model->invertTexAlpha ? "yes" : "no");
@@ -67,9 +64,6 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 	const string totalName = model->tex1 + model->tex2;
 
 	if (s3oTextureNames.find(totalName) != s3oTextureNames.end()) {
-		if (GML::SimEnabled() && GML::ShareLists() && !GML::IsSimThread())
-			DoUpdateDraw();
-
 		return s3oTextureNames[totalName];
 	}
 
@@ -125,9 +119,6 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 	s3oTextures.push_back(tex);
 	s3oTextureNames[totalName] = tex->num;
 
-	if (GML::SimEnabled() && GML::ShareLists() && !GML::IsSimThread())
-		DoUpdateDraw();
-
 	return tex->num;
 }
 
@@ -147,23 +138,8 @@ inline void DoSetS3oTexture(int num, std::vector<CS3OTextureHandler::S3oTex*>& s
 
 void CS3OTextureHandler::SetS3oTexture(int num)
 {
-	if (GML::SimEnabled() && GML::ShareLists()) {
-		if (!GML::IsSimThread()) {
-			DoSetS3oTexture(num, s3oTexturesDraw);
-		} else {
-			// it seems this is only accessed by draw thread, but just in case..
-			GML_RECMUTEX_LOCK(model); // SetS3oTexture
-			DoSetS3oTexture(num, s3oTextures);
-		}
-	} else {
-		DoSetS3oTexture(num, s3oTextures);
-	}
+	DoSetS3oTexture(num, s3oTextures);
 }
 
 void CS3OTextureHandler::UpdateDraw() {
-	if (GML::SimEnabled() && GML::ShareLists()) {
-		GML_RECMUTEX_LOCK(model); // UpdateDraw
-
-		DoUpdateDraw();
-	}
 }

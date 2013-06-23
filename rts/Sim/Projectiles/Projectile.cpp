@@ -77,7 +77,6 @@ CProjectile::CProjectile()
 	, projectileType(-1u)
 	, collisionFlags(0)
 {
-	GML::GetTicks(lastProjUpdate);
 }
 
 CProjectile::CProjectile(const float3& pos, const float3& spd, CUnit* owner, bool isSynced, bool isWeapon, bool isPiece)
@@ -105,7 +104,6 @@ CProjectile::CProjectile(const float3& pos, const float3& spd, CUnit* owner, boo
 	, collisionFlags(0)
 {
 	Init(ZeroVector, owner);
-	GML::GetTicks(lastProjUpdate);
 }
 
 void CProjectile::Detach() {
@@ -199,10 +197,6 @@ CUnit* CProjectile::owner() const {
 	// Note: this death dependency optimization using "ownerID" is logically flawed,
 	//  since ids are being reused it could return a unit that is not the original owner
 	CUnit* unit = unitHandler->GetUnit(ownerID);
-
-	// make volatile
-	if (GML::SimEnabled())
-		return (*(CUnit* volatile*) &unit);
 
 	return unit;
 }

@@ -9,7 +9,6 @@
 #include "MetalMap.h"
 #include "SM3/SM3Map.h"
 #include "SMF/SMFReadMap.h"
-#include "lib/gml/gmlmut.h"
 #include "Game/LoadScreen.h"
 #include "System/bitops.h"
 #include "System/EventHandler.h"
@@ -260,7 +259,6 @@ void CReadMap::UpdateDraw()
 	std::list<SRectangle>::const_iterator ushmuIt;
 
 	{
-		GML_STDMUTEX_LOCK(map); // UpdateDraw
 		
 		if (!unsyncedHeightMapUpdates.empty())
 			unsyncedHeightMapUpdates.swap(unsyncedHeightMapUpdatesTemp); // swap to avoid Optimize() inside a mutex
@@ -286,7 +284,6 @@ void CReadMap::UpdateDraw()
 		}
 	}
 	if (!unsyncedHeightMapUpdatesTemp.empty()) {
-		GML_STDMUTEX_LOCK(map); // UpdateDraw
 
 		unsyncedHeightMapUpdates.splice(unsyncedHeightMapUpdates.end(), unsyncedHeightMapUpdatesTemp);
 	}
@@ -322,7 +319,6 @@ void CReadMap::UpdateHeightMapSynced(SRectangle rect, bool initialize)
 	// push the unsynced update
 	if (initialize) {
 		// push 1st update through without LOS check
-		GML_STDMUTEX_LOCK(map); // UpdateHeightMapSynced
 		unsyncedHeightMapUpdates.push_back(rect);
 	} else {
 		InitHeightMapDigestsVectors();
@@ -341,7 +337,6 @@ void CReadMap::UpdateHeightMapSynced(SRectangle rect, bool initialize)
 		HeightMapUpdateLOSCheck(rect);
 	}
 #else
-	GML_STDMUTEX_LOCK(map); // UpdateHeightMapSynced
 	unsyncedHeightMapUpdates.push_back(rect);
 #endif
 }
@@ -503,7 +498,6 @@ void CReadMap::UpdateSlopemap(const SRectangle& rect)
 /// split the update into multiple invididual (los-square) chunks:
 void CReadMap::HeightMapUpdateLOSCheck(const SRectangle& rect)
 {
-	GML_STDMUTEX_LOCK(map); // HeightMapUpdateLOSCheck
 
 	InitHeightMapDigestsVectors();
 	const int losSqSize = loshandler->losDiv / SQUARE_SIZE; // size of LOS square in heightmap coords

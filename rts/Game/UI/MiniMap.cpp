@@ -3,7 +3,6 @@
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 
-#include "lib/gml/ThreadSafeContainers.h"
 
 #include "CommandColors.h"
 #include "CursorIcons.h"
@@ -22,7 +21,6 @@
 #include "Game/Players/Player.h"
 #include "Game/UI/UnitTracker.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Lua/LuaUI.h" // FIXME: for GML
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
@@ -487,7 +485,6 @@ void CMiniMap::MoveView(int x, int y)
 
 void CMiniMap::SelectUnits(int x, int y) const
 {
-	GML_RECMUTEX_LOCK(sel); //FIXME redundant? (selectedUnits already has mutexes)
 
 	if (!keyInput->IsKeyPressed(SDLK_LSHIFT) && !keyInput->IsKeyPressed(SDLK_LCTRL)) {
 		selectedUnitsHandler.ClearSelected();
@@ -793,7 +790,6 @@ std::string CMiniMap::GetTooltip(int x, int y)
 	}
 
 	{
-		GML_THRMUTEX_LOCK(unit, GML_DRAW); // GetTooltip
 
 		const CUnit* unit = GetSelectUnit(GetMapPosition(x, y));
 		if (unit) {
@@ -1139,7 +1135,6 @@ void CMiniMap::DrawForReal(bool use_geo, bool updateTex)
 	glAlphaFunc(GL_GREATER, 0.0f);
 
 	{
-		GML_RECMUTEX_LOCK(unit); // DrawForReal
 		unitDrawer->DrawUnitMiniMapIcons();
 	}
 
@@ -1178,7 +1173,6 @@ void CMiniMap::DrawForReal(bool use_geo, bool updateTex)
 	}
 
 	{
-		GML_RECMUTEX_LOCK(sel); // DrawForReal
 
 		// draw unit ranges
 		const float radarSquare = radarhandler->radarDiv;

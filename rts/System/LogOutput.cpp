@@ -2,7 +2,6 @@
 
 #include "System/LogOutput.h"
 
-#include "lib/gml/gmlmut.h"
 #include "System/Util.h"
 #include "Game/GameVersion.h"
 #include "System/Config/ConfigHandler.h"
@@ -67,7 +66,6 @@ CLogOutput::CLogOutput()
 
 CLogOutput::~CLogOutput()
 {
-	GML_STDMUTEX_LOCK_NOPROF(log); // End
 
 	SafeDelete(filelog);
 }
@@ -83,7 +81,6 @@ const std::string& CLogOutput::GetFilePath() const
 }
 void CLogOutput::SetFileName(std::string fname)
 {
-	GML_STDMUTEX_LOCK_NOPROF(log); // SetFileName
 
 	assert(!initialized);
 	fileName = fname;

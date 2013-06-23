@@ -418,7 +418,6 @@ void CGroundDecalHandler::DrawObjectDecals() {
 
 			decalsToDraw.clear();
 			{
-				GML_STDMUTEX_LOCK(decal); // Draw
 
 				set<SolidObjectGroundDecal*>::iterator bgdi = bdt->objectDecals.begin();
 
@@ -472,7 +471,6 @@ void CGroundDecalHandler::DrawObjectDecals() {
 
 void CGroundDecalHandler::AddTracks() {
 	{
-		GML_STDMUTEX_LOCK(track); // Draw
 		// Delayed addition of new tracks
 		for (std::vector<TrackToAdd>::iterator ti = tracksToBeAdded.begin(); ti != tracksToBeAdded.end(); ++ti) {
 			TrackToAdd *tta = &(*ti);
@@ -572,7 +570,6 @@ void CGroundDecalHandler::DrawTracks() {
 }
 
 void CGroundDecalHandler::CleanTracks() {
-	GML_STDMUTEX_LOCK(track); // Draw
 
 	// Cleanup old tracks
 	for (std::vector<TrackToClean>::iterator ti = tracksToBeCleaned.begin(); ti != tracksToBeCleaned.end(); ++ti) {
@@ -605,7 +602,6 @@ void CGroundDecalHandler::AddScars() {
 	scarsToBeChecked.clear();
 
 	{
-		GML_STDMUTEX_LOCK(scar); // Draw
 
 		for (std::vector<Scar*>::iterator si = scarsToBeAdded.begin(); si != scarsToBeAdded.end(); ++si)
 			scarsToBeChecked.push_back(*si);
@@ -839,7 +835,6 @@ void CGroundDecalHandler::AddDecalAndTrack(CUnit* unit, const float3& newpos)
 	tta.tp = tp;
 	tta.unit = unit;
 
-	GML_STDMUTEX_LOCK(track); // Update
 
 	if (unit->myTrack == NULL) {
 		unit->myTrack = new UnitTrackStruct(unit);
@@ -887,7 +882,6 @@ int CGroundDecalHandler::GetTrackType(const std::string& name)
 	tt->name = lowerName;
 	tt->texture = LoadTexture(lowerName);
 
-//	GML_STDMUTEX_LOCK(tracktype); // GetTrackType
 
 	trackTypes.push_back(tt);
 
@@ -980,7 +974,6 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius, b
 	s->overdrawn = 0;
 	s->lastTest = 0;
 
-	GML_STDMUTEX_LOCK(scar); // AddExplosion
 
 	scarsToBeAdded.push_back(s);
 }
@@ -1119,7 +1112,6 @@ void CGroundDecalHandler::MoveSolidObject(CSolidObject* object, const float3& po
 			return;
 	}
 
-	GML_STDMUTEX_LOCK(decal); // AddSolidObject
 
 	SolidObjectGroundDecal* olddecal = object->groundDecal;
 	if (olddecal != NULL) {
@@ -1162,7 +1154,6 @@ void CGroundDecalHandler::RemoveSolidObject(CSolidObject* object, GhostSolidObje
 	if (decalLevel == 0)
 		return;
 
-	GML_STDMUTEX_LOCK(decal); // RemoveSolidObject
 
 	assert(object);
 	SolidObjectGroundDecal* decal = object->groundDecal;
@@ -1187,7 +1178,6 @@ void CGroundDecalHandler::ForceRemoveSolidObject(CSolidObject* object)
 	if (decalLevel == 0)
 		return;
 
-	GML_STDMUTEX_LOCK(decal); // ForcedRemoveSolidObject
 
 	SolidObjectGroundDecal* decal = object->groundDecal;
 
@@ -1210,7 +1200,6 @@ int CGroundDecalHandler::GetSolidObjectDecalType(const std::string& name)
 
 	int decalType = 0;
 
-	GML_STDMUTEX_LOCK(decal); // GetSolidObjectDecalType
 
 	std::vector<SolidObjectDecalType*>::iterator bi;
 	for (bi = objectDecalTypes.begin(); bi != objectDecalTypes.end(); ++bi) {
@@ -1266,7 +1255,6 @@ void CGroundDecalHandler::RenderUnitDestroyed(const CUnit* unit) {
 	if (decalLevel == 0)
 		return;
 
-	GML_STDMUTEX_LOCK(track); // RemoveUnit
 
 	CUnit* u = const_cast<CUnit*>(unit);
 	RemoveSolidObject(u, NULL);

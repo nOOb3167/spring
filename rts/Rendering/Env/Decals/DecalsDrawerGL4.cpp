@@ -750,7 +750,6 @@ void CDecalsDrawerGL4::AddExplosion(float3 pos, float damage, float radius, bool
 	SNPRINTF(buf, sizeof(buf), "%i", r);
 	s->texOffsets = atlasTexs[std::string(buf)];
 
-	GML_STDMUTEX_LOCK(decal);
 
 	if (decals.size() < maxDecals) {
 		//FIXME use mt-safe container
@@ -769,7 +768,6 @@ void CDecalsDrawerGL4::UnitCreated(const CUnit* unit, const CUnit* builder)
 	if (!unit->unitDef->decalDef.useGroundDecal)
 		return;
 
-	GML_STDMUTEX_LOCK(decal);
 
 	const int sizex = unit->unitDef->decalDef.groundDecalSizeX;
 	const int sizey = unit->unitDef->decalDef.groundDecalSizeY;
@@ -798,7 +796,6 @@ void CDecalsDrawerGL4::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
 	if (!unit->unitDef->decalDef.useGroundDecal)
 		return;
 
-	GML_STDMUTEX_LOCK(decal);
 
 	//TODO FINISH
 	//decal->owner = NULL;

@@ -1,7 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "lib/gml/gml.h"
-
 #include "UnitDef.h"
 #include "Unit.h"
 #include "UnitHandler.h"
@@ -238,7 +236,6 @@ CUnit::CUnit() : CSolidObject(),
 
 	stunned(false)
 {
-	GML::GetTicks(lastUnitUpdate);
 }
 
 CUnit::~CUnit()
@@ -1718,7 +1715,6 @@ void CUnit::CalculateTerrainType()
 
 bool CUnit::SetGroup(CGroup* newGroup, bool fromFactory)
 {
-	GML_RECMUTEX_LOCK(grpsel); // SetGroup
 
 	// factory is not necessarily selected
 	if (fromFactory && !selectedUnitsHandler.AutoAddBuiltUnitsToFactoryGroup())
@@ -1748,11 +1744,6 @@ bool CUnit::SetGroup(CGroup* newGroup, bool fromFactory)
 }
 
 
-#if defined(USE_GML) && defined(__GNUC__) && (__GNUC__ == 4)
-// This is supposed to fix some GCC crashbug related to threading
-// The MOVAPS SSE instruction is otherwise getting misaligned data
-__attribute__ ((force_align_arg_pointer))
-#endif
 bool CUnit::AddBuildPower(float amount, CUnit* builder)
 {
 	// stop decaying on building AND reclaim
@@ -2253,12 +2244,6 @@ void CUnit::ScriptDecloak(bool updateCloakTimeOut)
 	}
 }
 
-#ifdef USE_GML
-	#define LOD_MUTEX CR_MEMBER_UN(lodmutex),
-#else
-	#define LOD_MUTEX
-#endif
-
 CR_BIND_DERIVED(CUnit, CSolidObject, );
 CR_REG_METADATA(CUnit, (
 	CR_MEMBER(unitDef),
@@ -2469,8 +2454,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER_UN(currentLOD),
 	CR_MEMBER_UN(lastDrawFrame),
 	CR_MEMBER(lastUnitUpdate),
-
-	LOD_MUTEX
 
 	CR_MEMBER_UN(tooltip),
 

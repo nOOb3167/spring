@@ -672,7 +672,6 @@ void CGrassDrawer::Draw()
 	glColor4f(0.62f, 0.62f, 0.62f, 1.0f);
 
 	SetupGlStateNear();
-		GML_RECMUTEX_LOCK(grass); // Draw
 		static CGrassBlockDrawer drawer;
 			drawer.cx = int(camera->GetPos().x / bMSsq);
 			drawer.cy = int(camera->GetPos().z / bMSsq);
@@ -788,7 +787,6 @@ void CGrassDrawer::ResetPos(const float3& pos)
 	if (grassOff)
 		return;
 
-	GML_RECMUTEX_LOCK(grass); // ResetPos
 
 	const int idx =
 		(int(pos.z / bMSsq) & 31) * 32 +
@@ -983,7 +981,6 @@ void CGrassDrawer::AddGrass(const float3& pos)
 	if (grassOff)
 		return;
 
-	GML_RECMUTEX_LOCK(grass); // AddGrass
 
 	const int x = int(pos.x) / SQUARE_SIZE / grassSquareSize;
 	const int z = int(pos.z) / SQUARE_SIZE / grassSquareSize;
@@ -996,7 +993,6 @@ void CGrassDrawer::RemoveGrass(int x, int z)
 	if (grassOff)
 		return;
 
-	GML_RECMUTEX_LOCK(grass); // RemoveGrass
 
 	grassMap[(z / grassSquareSize) * gs->mapx / grassSquareSize + x / grassSquareSize] = 0;
 	ResetPos(float3(x * SQUARE_SIZE, 0.0f, z * SQUARE_SIZE));

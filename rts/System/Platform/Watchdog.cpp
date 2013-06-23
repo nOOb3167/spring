@@ -2,7 +2,6 @@
 
 #include "Watchdog.h"
 
-#include "lib/gml/gml_base.h"
 #ifndef _WIN32
 	#include <fstream>
 	#include <iostream>
@@ -101,8 +100,6 @@ namespace Watchdog
 				if (spring_istime(curwdt) && (curtime - curwdt) > hangTimeout) {
 					if (!hangDetected) {
 						LOG_L(L_WARNING, "[Watchdog] Hang detection triggered for Spring %s.", SpringVersion::GetFull().c_str());
-						if (GML::Enabled())
-							LOG_L(L_WARNING, "MT with %d threads.", GML::ThreadCount());
 					}
 					LOG_L(L_WARNING, "  (in thread: %s)", threadNames[i]);
 

@@ -80,7 +80,6 @@
 	#include "System/Platform/Linux/myX11.h"
 #endif
 
-#include "lib/gml/gml_base.h"
 #include "lib/luasocket/src/restrictions.h"
 
 CONFIG(unsigned, SetCoreAffinity).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the main-thread should use.");
@@ -106,7 +105,6 @@ CONFIG(int, WindowPosY).defaultValue(32).description("Sets the vertical position
 CONFIG(int, WindowState).defaultValue(0);
 CONFIG(bool, WindowBorderless).defaultValue(false).description("When set and Fullscreen is 0, will put the game in Borderless Window mode, also known as Windowed Fullscreen. When using this, it is generally best to also set WindowPosX and WindowPosY to 0");
 CONFIG(int, PathingThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0);
-CONFIG(int, MultiThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0).maximumValue(GML_MAX_NUM_THREADS);
 CONFIG(std::string, name).defaultValue(UnnamedPlayerName).description("Sets your name in the game. Since this is overridden by lobbies with your lobby username when playing, it usually only comes up when viewing replays or starting the engine directly for testing purposes.");
 
 
@@ -959,15 +957,11 @@ int SpringApp::Update()
 	if (activeController) {
 		Watchdog::ClearTimer(WDT_MAIN);
 
-		if (!GML::SimThreadRunning()) {
 			ret = Threading::UpdateGameController(activeController);
-		}
-
 		if (ret) {
 			ScopedTimer cputimer("GameController::Draw");
 			ret = activeController->Draw();
 
-			GML::PumpAux();
 		}
 	}
 
@@ -1068,7 +1062,6 @@ void SpringApp::Shutdown()
 {
 	if (gu) gu->globalQuit = true;
 
-	GML::Exit();
 	SafeDelete(pregame);
 	delete game; // don't use SafeDelete some stuff in it's dtor needs valid game ptr
 	SafeDelete(selectMenu);
@@ -1111,7 +1104,6 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 {
 	switch (event.type) {
 		case SDL_VIDEORESIZE: {
-			GML_MSTMUTEX_LOCK(sim, -1); // MainEventHandler
 
 			Watchdog::ClearTimer(WDT_MAIN, true);
 			globalRendering->viewSizeX = event.resize.w;
@@ -1127,7 +1119,6 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			break;
 		}
 		case SDL_VIDEOEXPOSE: {
-			GML_MSTMUTEX_LOCK(sim, -1); // MainEventHandler
 
 			Watchdog::ClearTimer(WDT_MAIN, true);
 			// re-initialize the stencil

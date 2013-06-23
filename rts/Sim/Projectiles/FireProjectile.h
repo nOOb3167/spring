@@ -5,7 +5,6 @@
 
 #include "Projectile.h"
 #include <list>
-#include "lib/gml/gmlcnf.h"
 
 
 class CFireProjectile : public CProjectile

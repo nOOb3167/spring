@@ -84,8 +84,8 @@ CR_REG_METADATA(CCustomExplosionGenerator, (
 CExplosionGeneratorHandler* explGenHandler = NULL;
 CCustomExplosionGenerator* gCEG = NULL;
 
-CExpGenSpawnable::CExpGenSpawnable(): CWorldObject() { GML_EXPGEN_CHECK() }
-CExpGenSpawnable::CExpGenSpawnable(const float3& pos): CWorldObject(pos) { GML_EXPGEN_CHECK() }
+CExpGenSpawnable::CExpGenSpawnable(): CWorldObject() { /*GML_EXPGEN_CHECK()*/ }
+CExpGenSpawnable::CExpGenSpawnable(const float3& pos): CWorldObject(pos) { /*GML_EXPGEN_CHECK()*/ }
 
 
 

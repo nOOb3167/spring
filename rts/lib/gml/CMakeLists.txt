@@ -18,9 +18,6 @@ INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR} ${GLEW_INCLUDE_DIR})
 
 SET(gmlSources
 		"ThreadSafeContainers.cpp"
-		"gml.cpp"
-		"gml_base.cpp"
-		"speedy-tls.cpp"
 	)
 
 ADD_LIBRARY(gml STATIC EXCLUDE_FROM_ALL ${gmlSources})

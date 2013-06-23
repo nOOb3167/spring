@@ -3,7 +3,6 @@
 #include <boost/cstdint.hpp>
 #include <SDL_keysym.h>
 
-#include "lib/gml/gmlmut.h"
 #include "GroupHandler.h"
 #include "Group.h"
 #include "Game/SelectedUnitsHandler.h"
@@ -52,7 +51,6 @@ CGroupHandler::~CGroupHandler()
 void CGroupHandler::Update()
 {
 	{
-		GML_RECMUTEX_LOCK(group); // Update
 
 		for (std::vector<CGroup*>::iterator gi = groups.begin(); gi != groups.end(); ++gi) {
 			if ((*gi) != NULL) {
@@ -64,7 +62,6 @@ void CGroupHandler::Update()
 
 	std::set<int> grpChg;
 	{
-		GML_STDMUTEX_LOCK(grpchg); // Update
 
 		if (changedGroups.empty())
 			return;
@@ -79,7 +76,6 @@ void CGroupHandler::Update()
 
 void CGroupHandler::GroupCommand(int num)
 {
-	GML_RECMUTEX_LOCK(grpsel); // GroupCommand
 
 	std::string cmd = "";
 
@@ -100,7 +96,6 @@ void CGroupHandler::GroupCommand(int num)
 
 void CGroupHandler::GroupCommand(int num, const std::string& cmd)
 {
-	GML_RECMUTEX_LOCK(grpsel); // GroupCommand
 
 	CGroup* group = groups[num];
 
@@ -155,7 +150,6 @@ void CGroupHandler::GroupCommand(int num, const std::string& cmd)
 
 CGroup* CGroupHandler::CreateNewGroup()
 {
-	GML_RECMUTEX_LOCK(group); // GroupCommand
 
 	if (freeGroups.empty()) {
 		CGroup* group = new CGroup(firstUnusedGroup++, this);
@@ -172,7 +166,6 @@ CGroup* CGroupHandler::CreateNewGroup()
 
 void CGroupHandler::RemoveGroup(CGroup* group)
 {
-	GML_RECMUTEX_LOCK(grpsel); // RemoveGroup
 
 	if (group->id < FIRST_SPECIAL_GROUP) {
 		LOG_L(L_WARNING, "Trying to remove hot-key group %i", group->id);
@@ -188,7 +181,6 @@ void CGroupHandler::RemoveGroup(CGroup* group)
 
 void CGroupHandler::PushGroupChange(int id)
 {
-	GML_STDMUTEX_LOCK(grpchg); // PushGroupChange
 
 	changedGroups.insert(id);
 }

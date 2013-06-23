@@ -354,11 +354,6 @@ void LuaUnsyncedCtrl::DrawUnitCommandQueues()
 
 	glLineWidth(cmdColors.QueuedLineWidth());
 
-	GML_RECMUTEX_LOCK(unit); // DrawUnitCommandQueues
-	GML_RECMUTEX_LOCK(feat); // DrawUnitCommandQueues
-	GML_STDMUTEX_LOCK(cai); // DrawUnitCommandQueues
-	GML_STDMUTEX_LOCK(dque); // DrawUnitCommandQueues
-
 	std::set<int>::const_iterator ui;
 
 	for (ui = drawCmdQueueUnits.begin(); ui != drawCmdQueueUnits.end(); ++ui) {
@@ -378,7 +373,6 @@ void LuaUnsyncedCtrl::DrawUnitCommandQueues()
 
 void LuaUnsyncedCtrl::ClearUnitCommandQueues()
 {
-	GML_STDMUTEX_LOCK(dque); // ClearUnitCommandQueues
 
 	drawCmdQueueUnits.clear();
 }
@@ -808,7 +802,6 @@ int LuaUnsyncedCtrl::AddWorldUnit(lua_State* L)
 
 int LuaUnsyncedCtrl::DrawUnitCommands(lua_State* L)
 {
-	GML_STDMUTEX_LOCK(dque); // DrawUnitCommands
 
 	if (lua_istable(L, 1)) {
 		const bool isMap = lua_isboolean(L, 2) && lua_toboolean(L, 2);
@@ -1588,7 +1581,6 @@ int LuaUnsyncedCtrl::SetUnitNoMinimap(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitNoSelect(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(sel); // SetUnitNoSelect
 
 	if (CLuaHandle::GetHandleUserMode(L)) {
 		return 0;
@@ -2267,7 +2259,6 @@ int LuaUnsyncedCtrl::SetUnitDefImage(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(group); // SetUnitGroup
 
 	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;

@@ -3,8 +3,6 @@
 #ifndef PROJECTILE_H
 #define PROJECTILE_H
 
-#include "lib/gml/gml_base.h"
-
 #ifdef _MSC_VER
 #pragma warning(disable:4291)
 #endif
@@ -12,6 +10,7 @@
 #include "ExplosionGenerator.h"
 #include "System/float3.h"
 #include "System/Vec2.h"
+#include <list>
 
 class CUnit;
 class CFeature;

@@ -4,6 +4,7 @@
 #define _OFFSCREENGLCONTEXT_H
 
 #include "Rendering/GL/myGL.h"
+#include "boost/date_time/posix_time/posix_time_types.hpp"
 
 #if defined(HEADLESS)
 	//! nothing

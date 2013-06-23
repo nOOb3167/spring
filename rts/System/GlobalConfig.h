@@ -2,7 +2,6 @@
 
 #ifndef _GLOBAL_CONFIG_H
 #define _GLOBAL_CONFIG_H
-#include "lib/gml/gmlcnf.h"
 
 
 class GlobalConfig {
@@ -100,18 +99,6 @@ public:
 	 */
 	bool luaWritableConfigFile;
 
-#if (defined(USE_GML) && GML_ENABLE_SIM) || defined(USE_LUA_MT)
-	/**
-	 * @brief multiThreadLua
-	 *
-	 * LuaHandle threading mode for Spring MT:
-	 * 
-	 * See LuaConfig.h and ModInfo::luaThreadingModel
-	 */
-	int multiThreadLua;
-	bool enableDrawCallIns;
-#endif
-	int GetMultiThreadLua();
 };
 
 extern GlobalConfig* globalConfig;

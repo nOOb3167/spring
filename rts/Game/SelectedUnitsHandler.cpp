@@ -96,7 +96,6 @@ void CSelectedUnitsHandler::ToggleBuildIconsFirst()
 
 CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailableCommands()
 {
-	GML_RECMUTEX_LOCK(grpsel); // GetAvailableCommands
 
 	possibleCommandsChanged = false;
 
@@ -195,7 +194,6 @@ CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailab
 
 void CSelectedUnitsHandler::GiveCommand(Command c, bool fromUser)
 {
-	GML_RECMUTEX_LOCK(grpsel); // GiveCommand
 
 	if (gu->spectating && !gs->godMode)
 		return;
@@ -275,7 +273,6 @@ void CSelectedUnitsHandler::GiveCommand(Command c, bool fromUser)
 
 void CSelectedUnitsHandler::HandleUnitBoxSelection(const float4& planeRight, const float4& planeLeft, const float4& planeTop, const float4& planeBottom)
 {
-	GML_RECMUTEX_LOCK(sel); // SelectUnits
 
 	CUnit* unit = NULL;
 	int addedunits = 0;
@@ -321,7 +318,6 @@ void CSelectedUnitsHandler::HandleUnitBoxSelection(const float4& planeRight, con
 
 void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doInViewTest)
 {
-	GML_RECMUTEX_LOCK(sel); // SelectUnits
 
 	//FIXME make modular?
 	const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
@@ -381,7 +377,6 @@ void CSelectedUnitsHandler::AddUnit(CUnit* unit)
 		return;
 	}
 
-	GML_RECMUTEX_LOCK(sel); // AddUnit
 
 	if (selectedUnits.insert(unit).second)
 		AddDeathDependence(unit, DEPENDENCE_SELECTED);
@@ -398,7 +393,6 @@ void CSelectedUnitsHandler::AddUnit(CUnit* unit)
 
 void CSelectedUnitsHandler::RemoveUnit(CUnit* unit)
 {
-	GML_RECMUTEX_LOCK(sel); // RemoveUnit
 
 	if (selectedUnits.erase(unit))
 		DeleteDeathDependence(unit, DEPENDENCE_SELECTED);
@@ -411,7 +405,6 @@ void CSelectedUnitsHandler::RemoveUnit(CUnit* unit)
 
 void CSelectedUnitsHandler::ClearSelected()
 {
-	GML_RECMUTEX_LOCK(sel); // ClearSelected
 
 	CUnitSet::iterator ui;
 	for (ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
@@ -428,7 +421,6 @@ void CSelectedUnitsHandler::ClearSelected()
 
 void CSelectedUnitsHandler::SelectGroup(int num)
 {
-	GML_RECMUTEX_LOCK(grpsel); // SelectGroup - not needed? only reading group
 
 	ClearSelected();
 	selectedGroup=num;
@@ -458,7 +450,6 @@ void CSelectedUnitsHandler::Draw()
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glLineWidth(cmdColors.UnitBoxLineWidth());
 
-	GML_RECMUTEX_LOCK(grpsel); // Draw
 
 	if (cmdColors.unitBox[3] > 0.05f) {
 		const CUnitSet* unitSet;
@@ -539,7 +530,6 @@ void CSelectedUnitsHandler::Draw()
 					(guihandler->inCommand < int(guihandler->commands.size())) &&
 					(guihandler->commands[guihandler->inCommand].id < 0)))) {
 
-			GML_STDMUTEX_LOCK(cai); // Draw
 
 			bool myColor = true;
 			glColor4fv(cmdColors.buildBox);
@@ -580,7 +570,6 @@ void CSelectedUnitsHandler::Draw()
 
 void CSelectedUnitsHandler::DependentDied(CObject *o)
 {
-	GML_RECMUTEX_LOCK(sel); // DependentDied - maybe superfluous, too late anyway
 
 	selectedUnits.erase(static_cast<CUnit*>(o));
 	selectionChanged = true;
@@ -710,7 +699,6 @@ int CSelectedUnitsHandler::GetDefaultCmd(const CUnit* unit, const CFeature* feat
 		return luaCmd;
 	}
 
-	GML_RECMUTEX_LOCK(sel); // GetDefaultCmd
 
 	// return the default if there are no units selected
 	CUnitSet::const_iterator ui = selectedUnits.begin();
@@ -747,7 +735,6 @@ int CSelectedUnitsHandler::GetDefaultCmd(const CUnit* unit, const CFeature* feat
 
 void CSelectedUnitsHandler::PossibleCommandChange(CUnit* sender)
 {
-	GML_RECMUTEX_LOCK(sel); // PossibleCommandChange
 
 	if (sender == NULL || selectedUnits.find(sender) != selectedUnits.end())
 		possibleCommandsChanged = true;
@@ -773,10 +760,6 @@ void CSelectedUnitsHandler::DrawCommands()
 
 	glLineWidth(cmdColors.QueuedLineWidth());
 
-	GML_RECMUTEX_LOCK(unit); // DrawCommands
-	GML_RECMUTEX_LOCK(feat); // DrawCommands
-	GML_RECMUTEX_LOCK(grpsel); // DrawCommands
-	GML_STDMUTEX_LOCK(cai); // DrawCommands
 
 	CUnitSet::iterator ui;
 	if (selectedGroup != -1) {
@@ -808,7 +791,6 @@ std::string CSelectedUnitsHandler::GetTooltip()
 {
 	std::string s = "";
 	{
-		GML_RECMUTEX_LOCK(sel); // GetTooltip - called from TooltipConsole::Draw --> MouseHandler::GetCurrentTooltip --> GetTooltip
 
 		if (!selectedUnits.empty()) {
 			const CUnit* unit = (*selectedUnits.begin());
@@ -835,7 +817,6 @@ std::string CSelectedUnitsHandler::GetTooltip()
 	}
 
 	{
-		GML_RECMUTEX_LOCK(sel); // GetTooltip
 
 		int numFuel = 0;
 		float maxHealth = 0.0f, curHealth = 0.0f;
@@ -906,7 +887,6 @@ std::string CSelectedUnitsHandler::GetTooltip()
 
 void CSelectedUnitsHandler::SetCommandPage(int page)
 {
-	GML_RECMUTEX_LOCK(sel); // SetCommandPage - called from CGame::Draw --> RunLayoutCommand --> LayoutIcons --> RevertToCmdDesc
 
 	CUnitSet::iterator ui;
 	for (ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
@@ -920,7 +900,6 @@ void CSelectedUnitsHandler::SendCommand(const Command& c)
 {
 	if (selectionChanged) {
 		// send new selection
-		GML_RECMUTEX_LOCK(sel); // SendSelection
 
 		// first, convert CUnit* to unit IDs.
 		std::vector<short> selectedUnitIDs(selectedUnits.size());

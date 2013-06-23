@@ -109,7 +109,7 @@ CLuaHandle::~CLuaHandle()
 
 
 void CLuaHandle::UpdateThreading() {
-	int mtl = globalConfig->GetMultiThreadLua();
+	int mtl = 0;
 	useDualStates = (mtl == MT_LUA_DUAL_EXPORT || mtl == MT_LUA_DUAL || mtl == MT_LUA_DUAL_ALL || mtl == MT_LUA_DUAL_UNMANAGED);
 	singleState = (mtl != MT_LUA_DUAL_ALL && mtl != MT_LUA_DUAL_UNMANAGED);
 	copyExportTable = false;
@@ -190,7 +190,6 @@ bool CLuaHandle::AddEntriesToTable(lua_State* L, const char* name,
 
 bool CLuaHandle::LoadCode(lua_State *L, const string& code, const string& debug)
 {
-	GML_DRCMUTEX_LOCK(lua); // LoadCode
 
 	lua_settop(L, 0);
 
@@ -236,7 +235,6 @@ void CLuaHandle::CheckStack()
 	ExecuteLogEventBatch();
 
 	SELECT_LUA_STATE();
-	GML_DRCMUTEX_LOCK(lua); // CheckStack
 
 	const int top = lua_gettop(L);
 	if (top != 0) {
@@ -285,7 +283,6 @@ void CLuaHandle::DelayRecvFromSynced(lua_State* srcState, int args) {
 
 	LuaUtils::ShallowBackup(ddmp.data, srcState, args);
 
-	GML_STDMUTEX_LOCK(scall);
 
 	delayedCallsFromSynced.push_back(DelayDataDump());
 
@@ -329,11 +326,9 @@ bool CLuaHandle::ExecuteCallsFromSynced(bool forced) {
 #endif
 		return false;
 
-	GML_THRMUTEX_LOCK(obj, GML_DRAW); // ExecuteCallsFromSynced
 
 	std::vector<DelayDataDump> drfs;
 	{
-		GML_STDMUTEX_LOCK(scall); // ExecuteCallsFromSynced
 
 		if(delayedCallsFromSynced.empty())
 			return false;
@@ -341,12 +336,9 @@ bool CLuaHandle::ExecuteCallsFromSynced(bool forced) {
 		delayedCallsFromSynced.swap(drfs);
 	}
 
-	GML_THRMUTEX_LOCK(unit, GML_DRAW); // ExecuteCallsFromSynced
-	GML_THRMUTEX_LOCK(feat, GML_DRAW); // ExecuteCallsFromSynced
 //	GML_THRMUTEX_LOCK(proj, GML_DRAW); // ExecuteCallsFromSynced
 
 	SELECT_UNSYNCED_LUA_STATE(); // ExecuteCallsFromSynced
-	GML_DRCMUTEX_LOCK(lua);
 
 	for (int i = 0; i < drfs.size(); ++i) {
 		DelayDataDump &ddp = drfs[i];
@@ -1523,24 +1515,15 @@ void CLuaHandle::StockpileChanged(const CUnit* unit,
 void CLuaHandle::ExecuteUnitEventBatch() {
 	if(!UseEventBatch()) return;
 
-	GML_THRMUTEX_LOCK(obj, GML_DRAW); // ExecuteUnitEventBatch
 
 	std::vector<LuaUnitEvent> lueb;
 	{
-		GML_STDMUTEX_LOCK(ulbatch);
 
 		if(luaUnitEventBatch.empty())
 			return;
 
 		luaUnitEventBatch.swap(lueb);
 	}
-
-	GML_THRMUTEX_LOCK(unit, GML_DRAW); // ExecuteUnitEventBatch
-	GML_THRMUTEX_LOCK(feat, GML_DRAW); // ExecuteUnitEventBatch
-//	GML_THRMUTEX_LOCK(proj, GML_DRAW); // ExecuteUnitEventBatch
-
-	GML_SELECT_LUA_STATE();
-	GML_DRCMUTEX_LOCK(lua); // ExecuteUnitEventBatch
 
 	if (Threading::IsSimThread())
 		Threading::SetBatchThread(false);
@@ -1644,24 +1627,15 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 void CLuaHandle::ExecuteFeatEventBatch() {
 	if(!UseEventBatch()) return;
 
-	GML_THRMUTEX_LOCK(obj, GML_DRAW); // ExecuteFeatEventBatch
 
 	std::vector<LuaFeatEvent> lfeb;
 	{
-		GML_STDMUTEX_LOCK(flbatch);
 
 		if(luaFeatEventBatch.empty())
 			return;
 
 		luaFeatEventBatch.swap(lfeb);
 	}
-
-	GML_THRMUTEX_LOCK(unit, GML_DRAW); // ExecuteFeatEventBatch
-	GML_THRMUTEX_LOCK(feat, GML_DRAW); // ExecuteFeatEventBatch
-//	GML_THRMUTEX_LOCK(proj, GML_DRAW); // ExecuteFeatEventBatch
-
-	GML_SELECT_LUA_STATE();
-	GML_DRCMUTEX_LOCK(lua); // ExecuteFeatEventBatch
 
 	if(Threading::IsSimThread())
 		Threading::SetBatchThread(false);
@@ -1687,11 +1661,9 @@ void CLuaHandle::ExecuteFeatEventBatch() {
 void CLuaHandle::ExecuteObjEventBatch() {
 	if(!UseEventBatch()) return;
 
-	GML_THRMUTEX_LOCK(obj, GML_DRAW); // ExecuteObjEventBatch
 
 	std::vector<LuaObjEvent> loeb;
 	{
-		GML_STDMUTEX_LOCK(olbatch);
 
 		if(luaObjEventBatch.empty())
 			return;
@@ -1699,12 +1671,6 @@ void CLuaHandle::ExecuteObjEventBatch() {
 		luaObjEventBatch.swap(loeb);
 	}
 
-	GML_THRMUTEX_LOCK(unit, GML_DRAW); // ExecuteObjEventBatch
-	GML_THRMUTEX_LOCK(feat, GML_DRAW); // ExecuteObjEventBatch
-//	GML_THRMUTEX_LOCK(proj, GML_DRAW); // ExecuteObjEventBatch
-
-	GML_SELECT_LUA_STATE();
-	GML_DRCMUTEX_LOCK(lua); // ExecuteObjEventBatch
 
 	if(Threading::IsSimThread())
 		Threading::SetBatchThread(false);
@@ -1727,22 +1693,15 @@ void CLuaHandle::ExecuteObjEventBatch() {
 void CLuaHandle::ExecuteProjEventBatch() {
 	if(!UseEventBatch()) return;
 
-//	GML_THRMUTEX_LOCK(unit, GML_DRAW); // ExecuteProjEventBatch
-//	GML_THRMUTEX_LOCK(feat, GML_DRAW); // ExecuteProjEventBatch
-	GML_THRMUTEX_LOCK(proj, GML_DRAW); // ExecuteProjEventBatch
 
 	std::vector<LuaProjEvent> lpeb;
 	{
-		GML_STDMUTEX_LOCK(plbatch);
 
 		if(luaProjEventBatch.empty())
 			return;
 
 		luaProjEventBatch.swap(lpeb);
 	}
-
-	GML_SELECT_LUA_STATE();
-	GML_DRCMUTEX_LOCK(lua); // ExecuteProjEventBatch
 
 	if(Threading::IsSimThread())
 		Threading::SetBatchThread(false);
@@ -1770,7 +1729,6 @@ void CLuaHandle::ExecuteFrameEventBatch() {
 
 	std::vector<int> lgeb;
 	{
-		GML_STDMUTEX_LOCK(glbatch);
 
 		if(luaFrameEventBatch.empty())
 			return;
@@ -1778,12 +1736,6 @@ void CLuaHandle::ExecuteFrameEventBatch() {
 		luaFrameEventBatch.swap(lgeb);
 	}
 
-	GML_THRMUTEX_LOCK(unit, GML_DRAW); // ExecuteFrameEventBatch
-	GML_THRMUTEX_LOCK(feat, GML_DRAW); // ExecuteFrameEventBatch
-//	GML_THRMUTEX_LOCK(proj, GML_DRAW); // ExecuteFrameEventBatch
-
-	GML_SELECT_LUA_STATE();
-	GML_DRCMUTEX_LOCK(lua); // ExecuteFrameEventBatch
 
 	if(Threading::IsSimThread())
 		Threading::SetBatchThread(false);
@@ -1800,7 +1752,6 @@ void CLuaHandle::ExecuteLogEventBatch() {
 
 	std::vector<LuaLogEvent> lmeb;
 	{
-		GML_STDMUTEX_LOCK(mlbatch);
 
 		if (luaLogEventBatch.empty()) {
 			return;
@@ -1809,12 +1760,7 @@ void CLuaHandle::ExecuteLogEventBatch() {
 		luaLogEventBatch.swap(lmeb);
 	}
 
-	GML_THRMUTEX_LOCK(unit, GML_DRAW); // ExecuteLogEventBatch
-	GML_THRMUTEX_LOCK(feat, GML_DRAW); // ExecuteLogEventBatch
-//	GML_THRMUTEX_LOCK(proj, GML_DRAW); // ExecuteLogEventBatch
 
-	GML_SELECT_LUA_STATE();
-	GML_DRCMUTEX_LOCK(lua); // ExecuteLogEventBatch
 
 	if (Threading::IsSimThread()) {
 		Threading::SetBatchThread(false);

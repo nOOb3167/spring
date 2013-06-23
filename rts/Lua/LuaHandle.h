@@ -116,8 +116,6 @@ class CLuaHandle : public CEventClient
 		bool WantsEvent(const string& name)  {
 			BEGIN_ITERATE_LUA_STATES();
 			{
-				GML_DRCMUTEX_LOCK(lua); // WantsEvent
-
 				if (HasCallIn(L, name))
 					return true;
 			}

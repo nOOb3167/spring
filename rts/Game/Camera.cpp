@@ -290,7 +290,6 @@ inline void CCamera::myGluLookAt(const float3& eye, const float3& center, const 
 
 
 void CCamera::GetFrustumSides(float miny, float maxy, float scale, bool negSide) {
-	GML_RECMUTEX_LOCK(cam); // GetFrustumSides
 
 	ClearFrustumSides();
 	// note: order does not matter
@@ -309,7 +308,6 @@ void CCamera::GetFrustumSide(
 	bool upwardDir,
 	bool negSide)
 {
-	GML_RECMUTEX_LOCK(cam); // GetFrustumSide
 	// compose an orthonormal axis-system around <zdir>
 	float3 xdir = (zdir.cross(UpVector)).UnsafeANormalize();
 	float3 ydir = (zdir.cross(xdir)).UnsafeANormalize();
@@ -353,7 +351,6 @@ void CCamera::GetFrustumSide(
 }
 
 void CCamera::ClipFrustumLines(bool neg, const float zmin, const float zmax) {
-	GML_RECMUTEX_LOCK(cam); // ClipFrustumLines
 
 	std::vector<FrustumLine>& lines = neg? negFrustumSides: posFrustumSides;
 	std::vector<FrustumLine>::iterator fli, fli2;

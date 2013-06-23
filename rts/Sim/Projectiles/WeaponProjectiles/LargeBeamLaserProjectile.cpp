@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
+#include <string.h> //memset
 #include "LargeBeamLaserProjectile.h"
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"

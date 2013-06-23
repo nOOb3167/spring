@@ -38,7 +38,6 @@ namespace CNamedTextures {
 
 	void Kill()
 	{
-		GML_STDMUTEX_LOCK(ntex); // Kill
 
 		TEXMAP::iterator it;
 		for (it = texMap.begin(); it != texMap.end(); ++it) {
@@ -222,7 +221,6 @@ namespace CNamedTextures {
 			return false;
 		}
 
-		GML_STDMUTEX_LOCK(ntex); // Bind
 
 		// cached
 		TEXMAP::iterator it = texMap.find(texName);
@@ -261,7 +259,6 @@ namespace CNamedTextures {
 			return;
 		}
 
-		GML_STDMUTEX_LOCK(ntex); // Update
 
 		glPushAttrib(GL_TEXTURE_BIT);
 		for (std::vector<std::string>::iterator it = texWaiting.begin(); it != texWaiting.end(); ++it) {
@@ -281,7 +278,6 @@ namespace CNamedTextures {
 			return false;
 		}
 
-		GML_STDMUTEX_LOCK(ntex); // Free
 
 		TEXMAP::iterator it = texMap.find(texName);
 		if (it != texMap.end()) {
@@ -300,7 +296,6 @@ namespace CNamedTextures {
 			return NULL;
 		}
 
-		GML_STDMUTEX_LOCK(ntex); // GetInfo
 
 		TEXMAP::const_iterator it = texMap.find(texName);
 		if (it != texMap.end()) {

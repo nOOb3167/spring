@@ -10,7 +10,6 @@
 #include "Sim/Objects/SolidObjectDef.h"
 #include "Sim/Path/IPathManager.h"
 #include "System/creg/STL_Map.h"
-#include "lib/gml/gmlmut.h"
 
 CGroundBlockingObjectMap* groundBlockingObjectMap;
 
@@ -39,7 +38,6 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 		return;
 	}
 
-	GML_STDMUTEX_LOCK(block); // AddGroundBlockingObject
 
 	const int objID = GetObjectID(object);
 
@@ -71,7 +69,6 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 
 void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, const YardMapStatus& mask)
 {
-	GML_STDMUTEX_LOCK(block); // AddGroundBlockingObject
 
 	const int objID = GetObjectID(object);
 
@@ -110,7 +107,6 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, con
 
 void CGroundBlockingObjectMap::RemoveGroundBlockingObject(CSolidObject* object)
 {
-	GML_STDMUTEX_LOCK(block); // RemoveGroundBlockingObject
 
 	const int objID = GetObjectID(object);
 
@@ -143,7 +139,6 @@ void CGroundBlockingObjectMap::RemoveGroundBlockingObject(CSolidObject* object)
   * pointer to the top-most / bottom-most blocking object is returned.
   */
 CSolidObject* CGroundBlockingObjectMap::GroundBlockedUnsafe(int mapSquare) const {
-	GML_STDMUTEX_LOCK(block); // GroundBlockedUnsafe
 
 	const BlockingMapCell& cell = groundBlockingMap[mapSquare];
 
@@ -177,7 +172,6 @@ bool CGroundBlockingObjectMap::GroundBlocked(int x, int z, CSolidObject* ignoreO
 
 	const int mapSquare = x + z * gs->mapx;
 
-	GML_STDMUTEX_LOCK(block); // GroundBlockedUnsafe
 
 	if (groundBlockingMap[mapSquare].empty()) {
 		return false;
@@ -231,7 +225,6 @@ void CGroundBlockingObjectMap::CloseBlockingYard(CSolidObject* object) {
 
 inline bool CGroundBlockingObjectMap::CheckYard(CSolidObject* yardUnit, const YardMapStatus& mask) const
 {
-	//GML_STDMUTEX_LOCK(block); //done in GroundBlocked
 
 	for (int z = yardUnit->mapPos.y; z < yardUnit->mapPos.y + yardUnit->zsize; ++z) {
 		for (int x = yardUnit->mapPos.x; x < yardUnit->mapPos.x + yardUnit->xsize; ++x) {

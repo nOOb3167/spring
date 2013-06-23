@@ -282,7 +282,7 @@ void CFarTextureHandler::Draw()
 	}
 
 	// create new far-icons
-	for (GML_VECTOR<const CSolidObject*>::iterator it = queuedForRender.begin(); it != queuedForRender.end(); ++it) {
+	for (std::vector<const CSolidObject*>::iterator it = queuedForRender.begin(); it != queuedForRender.end(); ++it) {
 		const CSolidObject* obj = *it;
 		if (!HaveFarIcon(obj)) {
 			CreateFarTexture(obj);
@@ -304,7 +304,7 @@ void CFarTextureHandler::Draw()
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
 		va->EnlargeArrays(queuedForRender.size() * 4, 0, VA_SIZE_T);
-		for (GML_VECTOR<const CSolidObject*>::iterator it = queuedForRender.begin(); it != queuedForRender.end(); ++it) {
+		for (std::vector<const CSolidObject*>::iterator it = queuedForRender.begin(); it != queuedForRender.end(); ++it) {
 			DrawFarTexture(*it, va);
 		}
 

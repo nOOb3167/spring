@@ -3840,7 +3840,6 @@ int LuaSyncedRead::GetUnitCommands(lua_State* L)
 			"Incorrect arguments to GetUnitCommands(unitID [, count])");
 	}
 
-	GML_STDMUTEX_LOCK(cai); // GetUnitCommands
 
 	const CCommandAI* commandAI = unit->commandAI;
 	if (commandAI == NULL) {
@@ -3878,7 +3877,6 @@ int LuaSyncedRead::GetFactoryCommands(lua_State* L)
 		return 0;
 	}
 
-	GML_STDMUTEX_LOCK(cai); // GetFactoryCommands
 
 	const CCommandAI* commandAI = unit->commandAI;
 	const CFactoryCAI* factoryCAI = dynamic_cast<const CFactoryCAI*>(commandAI);
@@ -3971,7 +3969,6 @@ int LuaSyncedRead::GetFactoryCounts(lua_State* L)
 		return 0;
 	}
 
-	GML_STDMUTEX_LOCK(cai); // GetFactoryCounts
 
 	const CCommandAI* commandAI = unit->commandAI;
 	const CFactoryCAI* factoryCAI = dynamic_cast<const CFactoryCAI*>(commandAI);
@@ -4015,7 +4012,6 @@ int LuaSyncedRead::GetCommandQueue(lua_State* L)
 			"Incorrect arguments to GetCommandQueue(unitID [, count])");
 	}
 
-	GML_STDMUTEX_LOCK(cai); // GetCommandQueue
 
 	const CCommandAI* commandAI = unit->commandAI;
 	if (commandAI == NULL) {
@@ -4125,7 +4121,6 @@ static int PackBuildQueue(lua_State* L, bool canBuild, const char* caller)
 
 int LuaSyncedRead::GetFullBuildQueue(lua_State* L)
 {
-	GML_STDMUTEX_LOCK(cai); // GetFullBuildQueue
 
 	return PackBuildQueue(L, false, __FUNCTION__);
 }
@@ -4133,7 +4128,6 @@ int LuaSyncedRead::GetFullBuildQueue(lua_State* L)
 
 int LuaSyncedRead::GetRealBuildQueue(lua_State* L)
 {
-	GML_STDMUTEX_LOCK(cai); // GetRealBuildQueue
 
 	return PackBuildQueue(L, true, __FUNCTION__);
 }

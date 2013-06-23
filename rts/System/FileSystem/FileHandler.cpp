@@ -12,7 +12,6 @@
 #include <limits.h>
 #include <boost/regex.hpp>
 
-#include "lib/gml/gmlmut.h"
 #include "FileQueryFlags.h"
 #include "FileSystem.h"
 
@@ -33,7 +32,6 @@ using std::string;
 CFileHandler::CFileHandler(const char* fileName, const char* modes)
 	: filePos(0), fileSize(-1)
 {
-	GML_RECMUTEX_LOCK(file); // CFileHandler
 
 	Open(fileName, modes);
 }
@@ -42,7 +40,6 @@ CFileHandler::CFileHandler(const char* fileName, const char* modes)
 CFileHandler::CFileHandler(const string& fileName, const string& modes)
 	: filePos(0), fileSize(-1)
 {
-	GML_RECMUTEX_LOCK(file); // CFileHandler
 
 	Open(fileName, modes);
 }
@@ -50,7 +47,6 @@ CFileHandler::CFileHandler(const string& fileName, const string& modes)
 
 CFileHandler::~CFileHandler()
 {
-	GML_RECMUTEX_LOCK(file); // ~CFileHandler
 	ifs.close();
 }
 
@@ -186,7 +182,6 @@ bool CFileHandler::FileExists() const
 
 int CFileHandler::Read(void* buf, int length)
 {
-	GML_RECMUTEX_LOCK(file); // Read
 
 	if (ifs.is_open()) {
 		ifs.read(static_cast<char*>(buf), length);
@@ -210,7 +205,6 @@ int CFileHandler::Read(void* buf, int length)
 
 void CFileHandler::Seek(int length, std::ios_base::seekdir where)
 {
-	GML_RECMUTEX_LOCK(file); // Seek
 
 	if (ifs.is_open())
 	{
@@ -239,7 +233,6 @@ void CFileHandler::Seek(int length, std::ios_base::seekdir where)
 
 bool CFileHandler::Eof() const
 {
-	GML_RECMUTEX_LOCK(file); // Eof
 
 	if (ifs.is_open()) {
 		return ifs.eof();
@@ -259,7 +252,6 @@ int CFileHandler::FileSize() const
 
 int CFileHandler::GetPos()
 {
-	GML_RECMUTEX_LOCK(file); // GetPos
 
 	if (ifs.is_open()) {
 		return ifs.tellg();
@@ -271,7 +263,6 @@ int CFileHandler::GetPos()
 
 bool CFileHandler::LoadStringData(string& data)
 {
-	GML_RECMUTEX_LOCK(file); // LoadStringData
 
 	if (!FileExists()) {
 		return false;
@@ -293,7 +284,6 @@ std::string CFileHandler::GetFileExt() const
 std::vector<string> CFileHandler::FindFiles(const string& path,
 		const string& pattern)
 {
-	GML_RECMUTEX_LOCK(file); // FindFiles
 
 #ifndef TOOLS
 	std::vector<string> found = dataDirsAccess.FindFiles(path, pattern);
@@ -322,7 +312,6 @@ std::vector<string> CFileHandler::FindFiles(const string& path,
 std::vector<string> CFileHandler::DirList(const string& path,
 		const string& pattern, const string& modes)
 {
-	GML_RECMUTEX_LOCK(file); // DirList
 
 	const string pat = pattern.empty() ? "*" : pattern;
 
@@ -410,7 +399,6 @@ bool CFileHandler::InsertBaseFiles(std::set<string>& fileSet,
 std::vector<string> CFileHandler::SubDirs(const string& path,
 		const string& pattern, const string& modes)
 {
-	GML_RECMUTEX_LOCK(file); // SubDirs
 
 	const string pat = pattern.empty() ? "*" : pattern;
 

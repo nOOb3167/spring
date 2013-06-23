@@ -162,11 +162,6 @@
 
 #undef CreateDirectory
 
-#ifdef USE_GML
-#include "lib/gml/gmlsrv.h"
-extern gmlClientServer<void, int,CUnit*>* gmlProcessor;
-#endif
-
 
 CONFIG(bool, WindowedEdgeMove).defaultValue(true).description("Sets whether moving the mouse cursor to the screen edge will move the camera across the map.");
 CONFIG(bool, FullscreenEdgeMove).defaultValue(true).description("see WindowedEdgeMove, just for fullscreen mode");
@@ -209,9 +204,6 @@ CR_REG_METADATA(CGame, (
 	CR_MEMBER(showFPS),
 	CR_MEMBER(showClock),
 	CR_MEMBER(showSpeed),
-	CR_MEMBER(showMTInfo),
-	CR_MEMBER(mtInfoThreshold),
-	CR_MEMBER(mtInfoCtrl),
 	CR_MEMBER(noSpectatorChat),
 	CR_MEMBER(gameID),
 	//CR_MEMBER(infoConsole),
@@ -362,10 +354,6 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	showFPS   = configHandler->GetBool("ShowFPS");
 	showClock = configHandler->GetBool("ShowClock");
 	showSpeed = configHandler->GetBool("ShowSpeed");
-	showMTInfo = configHandler->GetBool("ShowMTInfo");
-	GML::EnableCallChainWarnings(!!showMTInfo);
-	mtInfoThreshold = configHandler->GetFloat("MTInfoThreshold");
-	mtInfoCtrl = 0;
 
 	speedControl = configHandler->GetInt("SpeedControl");
 
@@ -384,16 +372,12 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	CLuaHandle::SetModUICtrl(configHandler->GetBool("LuaModUICtrl"));
 
 	modInfo.Init(modName.c_str());
-	GML::Init(); // modinfo plays key part in MT enable/disable
-	Threading::InitOMP(!GML::Enabled());
+	Threading::InitOMP(true);
 	Threading::SetThreadScheduler();
 
 	if (!mapInfo) {
 		mapInfo = new CMapInfo(gameSetup->MapFile(), gameSetup->mapName);
 	}
-
-	int mtl = globalConfig->GetMultiThreadLua();
-	showMTInfo = showMTInfo ? mtl : -1;
 
 	if (!sideParser.Load()) {
 		throw content_error(sideParser.GetErrorLog());
@@ -507,7 +491,6 @@ CGame::~CGame()
 
 void CGame::LoadGame(const std::string& mapName)
 {
-	GML::ThreadNumber(GML_LOAD_THREAD_NUM);
 	Threading::SetThreadName("loading");
 
 	Watchdog::RegisterThread(WDT_LOAD);
@@ -1022,10 +1005,8 @@ bool CGame::UpdateUnsynced()
 
 		skipLastDrawTime = currentTime;
 
-		if (!GML::SimEnabled() || !GML::MultiThreadSim()) {
-			DrawSkip();
-			return true;
-		}
+		DrawSkip();
+		return true;
 	}
 
 	thisFps++;
@@ -1050,7 +1031,6 @@ bool CGame::UpdateUnsynced()
 		globalRendering->FPS = thisFps / frameDeltaTime;
 		thisFps = 0;
 
-		if (GML::SimEnabled()) GML_RESET_LOCK_TIME(); //FIXME move to a GML update place?
 	}
 
 	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
@@ -1128,24 +1108,7 @@ bool CGame::UpdateUnsynced()
 }
 
 
-#if defined(USE_GML) && GML_ENABLE_DRAW
 bool CGame::Draw() {
-	gmlProcessor->Work(&CGame::DrawMTcb,NULL,NULL,this,GML::ThreadCount(),TRUE,NULL,1,2,2,FALSE);
-	return true;
-}
-#else
-bool CGame::DrawMT() {
-	return true;
-}
-#endif
-
-
-#if defined(USE_GML) && GML_ENABLE_DRAW
-bool CGame::DrawMT() {
-#else
-bool CGame::Draw() {
-#endif
-	GML_STDMUTEX_LOCK(draw); //Draw
 
 	if (UpdateUnsynced())
 		return true;
@@ -1351,23 +1314,10 @@ bool CGame::Draw() {
 			smallFont->glPrint(0.99f, 0.90f, 1.0f, INF_FONT_FLAGS, buf);
 		}
 
-		if (GML::SimEnabled() && showMTInfo != -1) {
-			const char* pstr = "LUA-EXP-SIZE(MT): %2.1fK LUA-SYNC-CPU(MT): %2.1fms";
-			char buf[80];
-			SNPRINTF(buf, sizeof(buf), pstr, LuaUtils::exportedDataSize / 1000.0f, GML_LOCK_TIME());
-			const float warnMix = std::max(LuaUtils::exportedDataSize / 5000.0f, (GML_LOCK_TIME() - 1.0f) / 50.0f);
-			const float4 warncol(float(spring_tomsecs(currentTimePreDraw) & 128) * warnMix, 1.0f - warnMix, 0.0f,1.0f);
-			smallFont->SetColors(&warncol, NULL);
-			smallFont->glPrint(0.99f, 0.88f, 1.0f, INF_FONT_FLAGS, buf);
-		}
-
 		CPlayerRosterDrawer::Draw();
 
 		smallFont->End();
 	}
-
-	if (GML::SimEnabled() && skipping)
-		DrawSkip(false);
 
 	mouse->DrawCursor();
 
@@ -1515,7 +1465,6 @@ void CGame::StartPlaying()
 	// and both share the same SimFrame!
 	eventHandler.GameFrame(0);
 
-	GML::PrintStartupMessage(showMTInfo);
 }
 
 
@@ -1601,7 +1550,6 @@ void CGame::UpdateUI(bool updateCam)
 		FPSUnitController& fpsCon = player->fpsController;
 
 		if (fpsCon.oldDCpos != ZeroVector) {
-			GML_STDMUTEX_LOCK(pos); // UpdateUI
 
 			camHandler->GetCurrentController().SetPos(fpsCon.oldDCpos);
 			fpsCon.oldDCpos = ZeroVector;
@@ -2021,7 +1969,6 @@ void CGame::SelectCycle(const string& command)
 	static set<int> unitIDs;
 	static int lastID = -1;
 
-	GML_RECMUTEX_LOCK(sel); // SelectCycle
 
 	const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
 
