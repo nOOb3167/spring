@@ -1,10 +1,12 @@
 #!/bin/sh
 
+# analyzes existing coredumps and uploads all files created by spring to springrts.com/dl/buildbot
 set -e
-. buildbot/slave/prepare.sh
+. buildbot/slave/validation/tests-env.sh
 
-TESTDIR=${TMP_BASE}/tests
+
 SPRING=${TESTDIR}/usr/local/bin/spring-headless
+SEVENZIP="7z a"
 
 if ! [ -x $SPRING ]; then
 	echo Usage: $0 /path/to/spring
@@ -13,7 +15,7 @@ fi
 
 EXITCODE=0
 
-for COREFILE in $(find ${TESTDIR}/.config/spring ${TESTDIR}/.spring/ ${TESTDIR}/ -maxdepth 1 -type f -name "core.*")
+for COREFILE in $(find ${TESTDIR}/.config/spring ${TESTDIR}/ -maxdepth 1 -type f -name "core.*")
 do
 	echo Core file found, creating backtrace
 	GDBCMDS=$(mktemp)
@@ -31,9 +33,10 @@ do
 	rm -f $COREFILE
 	EXITCODE=1
 done
-if [ $EXITCODE -ne 0 ]; then
-	echo Tests failed, uploading spring writeable dir
-	mkdir -p ${TMP_PATH}/validation/
-	mv ${TMP_BASE}/tests/.config/spring/ ${TMP_PATH}/validation/
-fi
+
+# zip output for upload
+mkdir -p ${TMP_PATH}/validation/
+${SEVENZIP} ${TMP_PATH}/validation/$VERSION_$(date +"%Y-%m-%d_%H-%M-%S")-dbg.7z ${TMP_BASE}/tests/.config/spring/
+rm -rf ${TMP_BASE}/tests/.config/spring/
+
 exit $EXITCODE

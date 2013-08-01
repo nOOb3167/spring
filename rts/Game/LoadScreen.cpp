@@ -17,6 +17,7 @@
 #include "Rendering/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Rendering/Textures/NamedTextures.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/IPathManager.h"
 #include "System/Config/ConfigHandler.h"
@@ -144,8 +145,10 @@ CLoadScreen::~CLoadScreen()
 	if (activeController == this)
 		activeController = NULL;
 
-	if (LuaIntro)
+	if (LuaIntro) {
+		Draw(); // one last frame
 		LuaIntro->Shutdown();
+	}
 	CLuaIntro::FreeHandler();
 
 	if (!gu->globalQuit) {
@@ -236,8 +239,10 @@ bool CLoadScreen::Update()
 
 	if (game->finishedLoading) {
 		CLoadScreen::DeleteInstance();
+		return true;
 	}
 
+	CNamedTextures::Update();
 	return true;
 }
 
@@ -259,6 +264,11 @@ bool CLoadScreen::Draw()
 
 	//! cause of `curLoadMessage`
 	boost::recursive_mutex::scoped_lock lck(mutex);
+
+	if (LuaIntro) {
+		LuaIntro->Update();
+		LuaIntro->DrawGenesis();
+	}
 
 	ClearScreen();
 

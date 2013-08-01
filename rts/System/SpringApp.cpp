@@ -53,6 +53,7 @@
 #include "Net/Protocol/NetProtocol.h"
 #include "System/StartScriptGen.h"
 #include "System/TimeProfiler.h"
+#include "System/ThreadPool.h"
 #include "System/Util.h"
 #include "System/creg/creg_runtime_tests.h"
 #include "System/Input/KeyInput.h"
@@ -201,13 +202,15 @@ bool SpringApp::Initialize()
 	Watchdog::RegisterThread(WDT_MAIN, true);
 
 	GlobalConfig::Instantiate();
-	FileSystemInitializer::Initialize();
 
 	// Create Window
 	if (!InitWindow(("Spring " + SpringVersion::GetSync()).c_str())) {
 		SDL_Quit();
 		return false;
 	}
+
+	ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads());
+	FileSystemInitializer::Initialize();
 
 	mouseInput = IMouseInput::GetInstance();
 	keyInput = KeyInput::GetInstance();
@@ -956,8 +959,7 @@ int SpringApp::Update()
 	int ret = 1;
 	if (activeController) {
 		Watchdog::ClearTimer(WDT_MAIN);
-
-			ret = Threading::UpdateGameController(activeController);
+		ret = Threading::UpdateGameController(activeController);
 		if (ret) {
 			ScopedTimer cputimer("GameController::Draw");
 			ret = activeController->Draw();
@@ -1062,6 +1064,8 @@ void SpringApp::Shutdown()
 {
 	if (gu) gu->globalQuit = true;
 
+	ThreadPool::SetThreadCount(0);
+
 	SafeDelete(pregame);
 	delete game; // don't use SafeDelete some stuff in it's dtor needs valid game ptr
 	SafeDelete(selectMenu);
@@ -1104,7 +1108,6 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 {
 	switch (event.type) {
 		case SDL_VIDEORESIZE: {
-
 			Watchdog::ClearTimer(WDT_MAIN, true);
 			globalRendering->viewSizeX = event.resize.w;
 			globalRendering->viewSizeY = event.resize.h;
@@ -1119,7 +1122,6 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			break;
 		}
 		case SDL_VIDEOEXPOSE: {
-
 			Watchdog::ClearTimer(WDT_MAIN, true);
 			// re-initialize the stencil
 			glClearStencil(0);

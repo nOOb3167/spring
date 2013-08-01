@@ -15,6 +15,7 @@
 #include "System/Exceptions.h"
 #include "System/myMath.h"
 #include "System/TimeProfiler.h"
+#include "System/ThreadPool.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
@@ -220,7 +221,7 @@ void CReadMap::Initialize()
 	CalcHeightmapChecksum();
 	UpdateHeightMapSynced(SRectangle(0, 0, gs->mapx, gs->mapy), true);
 	//FIXME can't call that yet cause sky & skyLight aren't created yet (crashes in SMFReadMap.cpp)
-	//UpdateDraw(); 
+	//UpdateDraw();
 }
 
 
@@ -259,7 +260,6 @@ void CReadMap::UpdateDraw()
 	std::list<SRectangle>::const_iterator ushmuIt;
 
 	{
-		
 		if (!unsyncedHeightMapUpdates.empty())
 			unsyncedHeightMapUpdates.swap(unsyncedHeightMapUpdatesTemp); // swap to avoid Optimize() inside a mutex
 	}
@@ -284,7 +284,6 @@ void CReadMap::UpdateDraw()
 		}
 	}
 	if (!unsyncedHeightMapUpdatesTemp.empty()) {
-
 		unsyncedHeightMapUpdates.splice(unsyncedHeightMapUpdates.end(), unsyncedHeightMapUpdatesTemp);
 	}
 	// unsyncedHeightMapUpdatesTemp is now guaranteed empty
@@ -373,7 +372,7 @@ void CReadMap::UpdateMipHeightmaps(const SRectangle& rect)
 		const int ex = (rect.x2 >> i);
 		const int sy = (rect.z1 >> i) & (~1);
 		const int ey = (rect.z2 >> i);
-		
+
 		for (int y = sy; y < ey; y += 2) {
 			for (int x = sx; x < ex; x += 2) {
 				const float height =
@@ -397,10 +396,7 @@ void CReadMap::UpdateFaceNormals(const SRectangle& rect)
 	const int z2 = std::min(gs->mapym1, rect.z2 + 1);
 	const int x2 = std::min(gs->mapxm1, rect.x2 + 1);
 
-	int y;
-	Threading::OMPCheck();
-	#pragma omp parallel for private(y)
-	for (y = z1; y <= z2; y++) {
+	for_mt(z1, z2+1, [&](const int y) {
 		float3 fnTL;
 		float3 fnBR;
 
@@ -449,7 +445,7 @@ void CReadMap::UpdateFaceNormals(const SRectangle& rect)
 			// square-normal
 			centerNormalsSynced[y * gs->mapx + x] = (fnTL + fnBR).Normalize();
 		}
-	}
+	});
 }
 
 
@@ -459,7 +455,7 @@ void CReadMap::UpdateSlopemap(const SRectangle& rect)
 	const int ex = std::min(gs->hmapx - 1, (rect.x2 / 2) + 1);
 	const int sy = std::max(0, (rect.z1 / 2) - 1);
 	const int ey = std::min(gs->hmapy - 1, (rect.z2 / 2) + 1);
-	
+
 	for (int y = sy; y <= ey; y++) {
 		for (int x = sx; x <= ex; x++) {
 			const int idx0 = (y*2    ) * (gs->mapx) + x*2;

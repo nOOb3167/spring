@@ -20,9 +20,8 @@
 #include "System/CRC.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
-#include "System/OpenMP_cond.h"
+#include "System/ThreadPool.h"
 #if       !defined(DEDICATED) && !defined(UNITSYNC)
-#include "System/Platform/Threading.h"
 #include "System/Platform/Watchdog.h"
 #endif // !defined(DEDICATED) && !defined(UNITSYNC)
 
@@ -135,7 +134,7 @@ CArchiveScanner::ArchiveData::ArchiveData(const LuaTable& archiveTable, bool fro
 	// so make sure it doesn't keep adding stuff to the name everytime
 	// Spring/unitsync is loaded.
 
-	const std::string& name = GetName();
+	const std::string& name = GetNameVersioned();
 	const std::string& version = GetVersion();
 	if (!version.empty()) {
 		if (name.find(version) == std::string::npos) {
@@ -144,6 +143,9 @@ CArchiveScanner::ArchiveData::ArchiveData(const LuaTable& archiveTable, bool fro
 			LOG_L(L_WARNING, "Invalid Name detected, please contact the author of the archive to remove the Version from the Name: %s, Version: %s", name.c_str(), version.c_str());
 		}
 	}
+
+	if (GetName().empty())
+		SetInfoItemValueString("name_pure", name);
 }
 
 std::string CArchiveScanner::ArchiveData::GetKeyDescription(const std::string& keyLower)
@@ -580,6 +582,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 
 			if (ai.archiveData.GetName().empty()) {
 				// FIXME The name will never be empty, if version is set (see HACK in ArchiveData)
+				ai.archiveData.SetInfoItemValueString("name_pure", FileSystem::GetBasename(mapfile));
 				ai.archiveData.SetInfoItemValueString("name", FileSystem::GetBasename(mapfile));
 			}
 			if (ai.archiveData.GetMapFile().empty()) {
@@ -590,7 +593,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 			ai.archiveData.SetInfoItemValueInteger("modType", modtype::map);
 
 			LOG_S(LOG_SECTION_ARCHIVESCANNER, "Found new map: %s",
-					ai.archiveData.GetName().c_str());
+					ai.archiveData.GetNameVersioned().c_str());
 		} else if (hasModinfo) {
 			// it is a mod
 			ScanArchiveLua(ar, "modinfo.lua", ai, error);
@@ -599,7 +602,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 			}
 
 			LOG_S(LOG_SECTION_ARCHIVESCANNER, "Found new game: %s",
-					ai.archiveData.GetName().c_str());
+					ai.archiveData.GetNameVersioned().c_str());
 		} else {
 			// neither a map nor a mod: error
 			error = "missing modinfo.lua/mapinfo.lua";
@@ -695,6 +698,8 @@ struct CRCPair {
 	unsigned int dataCRC;
 };
 
+
+
 /**
  * Get CRC of the data in the specified archive.
  * Returns 0 if file could not be opened.
@@ -745,13 +750,7 @@ unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 	//       it has to load the full file to calc it! For the other formats (sd7, sdz, sdp) the CRC is saved
 	//       in the metainformation of the container and so the loading is much faster. Neither does any of our
 	//       current (2011) packing libraries support multithreading :/
-	int i;
-#if !defined(DEDICATED) && !defined(UNITSYNC)
-//	Threading::OMPCheck();
-#endif
-//	This is currently used too early, OMP is not initialized here
-//	#pragma omp parallel for private(i)
-	for (i=0; i<crcs.size(); ++i) {
+	for_mt(0, crcs.size(), [&](const int i) {
 		CRCPair& crcp = crcs[i];
 		const unsigned int nameCRC = CRC().Update(crcp.filename->data(), crcp.filename->size()).GetDigest();
 		const unsigned fid = ar->FindFile(*crcp.filename);
@@ -761,7 +760,7 @@ unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 	#if !defined(DEDICATED) && !defined(UNITSYNC)
 		Watchdog::ClearTimer(WDT_MAIN);
 	#endif
-	}
+	});
 
 	// Add file CRCs to the main archive CRC
 	for (std::vector<CRCPair>::iterator it = crcs.begin(); it != crcs.end(); ++it) {
@@ -999,7 +998,7 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 
 static bool archNameCompare(const CArchiveScanner::ArchiveData& a, const CArchiveScanner::ArchiveData& b)
 {
-	return (a.GetName() < b.GetName());
+	return (a.GetNameVersioned() < b.GetNameVersioned());
 }
 static void sortByName(std::vector<CArchiveScanner::ArchiveData>& data)
 {
@@ -1105,7 +1104,7 @@ std::vector<std::string> CArchiveScanner::GetMaps() const
 
 	for (std::map<std::string, ArchiveInfo>::const_iterator aii = archiveInfos.begin(); aii != archiveInfos.end(); ++aii) {
 		if (!(aii->second.archiveData.GetName().empty()) && aii->second.archiveData.GetModType() == modtype::map) {
-			ret.push_back(aii->second.archiveData.GetName());
+			ret.push_back(aii->second.archiveData.GetNameVersioned());
 		}
 	}
 
@@ -1116,7 +1115,7 @@ std::string CArchiveScanner::MapNameToMapFile(const std::string& s) const
 {
 	// Convert map name to map archive
 	for (std::map<std::string, ArchiveInfo>::const_iterator aii = archiveInfos.begin(); aii != archiveInfos.end(); ++aii) {
-		if (s == aii->second.archiveData.GetName()) {
+		if (s == aii->second.archiveData.GetNameVersioned()) {
 			return aii->second.archiveData.GetMapFile();
 		}
 	}
@@ -1188,7 +1187,7 @@ std::string CArchiveScanner::GetArchivePath(const std::string& name) const
 std::string CArchiveScanner::ArchiveFromName(const std::string& name) const
 {
 	for (std::map<std::string, ArchiveInfo>::const_iterator it = archiveInfos.begin(); it != archiveInfos.end(); ++it) {
-		if (it->second.archiveData.GetName() == name) {
+		if (it->second.archiveData.GetNameVersioned() == name) {
 			return it->second.origName;
 		}
 	}
@@ -1201,7 +1200,7 @@ std::string CArchiveScanner::NameFromArchive(const std::string& archiveName) con
 	const std::string lcArchiveName = StringToLower(archiveName);
 	std::map<std::string, ArchiveInfo>::const_iterator aii = archiveInfos.find(lcArchiveName);
 	if (aii != archiveInfos.end()) {
-		return aii->second.archiveData.GetName();
+		return aii->second.archiveData.GetNameVersioned();
 	}
 
 	return archiveName;
@@ -1211,7 +1210,7 @@ CArchiveScanner::ArchiveData CArchiveScanner::GetArchiveData(const std::string& 
 {
 	for (std::map<std::string, ArchiveInfo>::const_iterator it = archiveInfos.begin(); it != archiveInfos.end(); ++it) {
 		const ArchiveData& md = it->second.archiveData;
-		if (md.GetName() == name) {
+		if (md.GetNameVersioned() == name) {
 			return md;
 		}
 	}
