@@ -29,10 +29,10 @@ static __thread bool exitThread(false);
 
 static struct do_once {
 	do_once() {
-		//ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads() - 1);
+		//ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads());
 	}
 	~do_once() {
-		//ThreadPool::SetThreadCount(0);
+		ThreadPool::SetThreadCount(0);
 	}
 } doOnce;
 
@@ -73,11 +73,6 @@ static void DoTask(boost::unique_lock<boost::mutex>& lk)
 		for(auto it = taskGroups.begin(); it != taskGroups.end();) {
 			auto& tg = **it;
 			auto p = tg.GetTask();
-			if (tg.IsEmpty()) {
-				it = taskGroups.erase(it);
-			} else {
-				++it;
-			}
 			if (p) {
 				lk.unlock();
 				SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
@@ -88,6 +83,11 @@ static void DoTask(boost::unique_lock<boost::mutex>& lk)
 					tg.PushException(std::current_exception());
 				}
 				return;
+			}
+			if (tg.IsEmpty()) {
+				it = taskGroups.erase(it);
+			} else {
+				++it;
 			}
 		}
 		lk.unlock();
