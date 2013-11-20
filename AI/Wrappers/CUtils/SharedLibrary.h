@@ -22,9 +22,7 @@
 extern "C" {
 #endif
 
-#ifndef bool
-	#include <stdbool.h>
-#endif
+#include <System/maindefines.h> // for bool
 #include <stddef.h> // for NULL
 
 #ifdef _WIN32

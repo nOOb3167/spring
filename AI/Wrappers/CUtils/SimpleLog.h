@@ -31,7 +31,7 @@ enum SimpleLog_Level {
 	SIMPLELOG_LEVEL_FINEST      = 10
 };
 
-#include <stdbool.h> // bool, true, false
+#include <System/maindefines.h> // bool, true, false
 
 #define EXTERNAL_LOGGER(msg)   log(msg);
 
