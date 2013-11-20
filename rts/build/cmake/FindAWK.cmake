@@ -16,10 +16,22 @@ ENDIF (AWK_BIN)
 SET(AWK_NAMES awk gawk mawk nawk)
 
 if    (CMAKE_HOST_WIN32)
-	set(AWK_BIN "${MINGWLIBS}/bin/awk.exe")
-	if    (NOT EXISTS AWK_BIN)
-		find_program(AWK_BIN NAMES ${AWK_NAMES})
-	endif (NOT EXISTS AWK_BIN)
+
+    # If AWK found in Generic path, set AWK_TMP_PATH to executable path, AWK_TMP_PATH_FOUND to true
+    find_program(AWK_TMP_PATH NAMES ${AWK_NAMES})
+
+    # If AWK found in specific MINGWLIBS path, set AWK_TMP_PATH to executable path, AWK_TMP_PATH_FOUND to true
+    # The AWK found this way takes precedence
+    if    (EXISTS   "${MINGWLIBS}/bin/awk.exe")
+        set(AWK_TMP_PATH_FOUND "TRUE")
+        set(AWK_TMP_PATH "${MINGWLIBS}/bin/awk.exe")
+    endif (EXISTS   "${MINGWLIBS}/bin/awk.exe")
+
+    # Produce a valid AWK_BIN if AWK found in either of the paths above
+    if    (AWK_TMP_PATH_FOUND)
+        set(AWK_BIN "${AWK_TMP_PATH}")
+    endif (AWK_TMP_PATH_FOUND)
+
 else  (CMAKE_HOST_WIN32)
 	find_program(AWK_BIN NAMES ${AWK_NAMES})
 endif (CMAKE_HOST_WIN32)
