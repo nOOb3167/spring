@@ -84,7 +84,7 @@ int SSkirmishAISpecifier_hash(
 	}
 	hashString_size += 1; // for the '\0' char
 
-	char hashString[hashString_size];
+	char *hashString = new char[hashString_size];
 	hashString[0] = '\0';
 
 	if (useShortName) {
@@ -96,6 +96,8 @@ int SSkirmishAISpecifier_hash(
 	}
 
 	int keyHash = string_simpleHash(hashString);
+
+	delete hashString;
 
 	return keyHash;
 }
