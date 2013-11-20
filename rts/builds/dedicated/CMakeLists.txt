@@ -147,9 +147,9 @@ SET(engineDedicatedSources
 ADD_LIBRARY(springserver-static STATIC EXCLUDE_FROM_ALL ${engineDedicatedSources})
 Add_Dependencies(springserver-static generateVersionFiles)
 TARGET_LINK_LIBRARIES(springserver-static ${engineDedicatedLibraries})
-IF    (MINGW)
+IF    (MINGW OR MSVC)
 	TARGET_LINK_LIBRARIES (springserver-static ${WS2_32_LIBRARY} ${IMAGEHLP_LIBRARY})
-ENDIF (MINGW)
+ENDIF (MINGW OR MSVC)
 
 # Compile dedicated server executable
 ADD_EXECUTABLE(engine-dedicated
