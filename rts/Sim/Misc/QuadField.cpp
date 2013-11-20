@@ -553,10 +553,9 @@ void CQuadField::MovedProjectile(CProjectile* p)
 	const CProjectile::QuadFieldCellData& qfcd = p->GetQuadFieldCellData();
 
 	const int2 oldCellCoors = qfcd.GetCoor(0);
-	const int2 newCellCoors = {
-		std::max(0, std::min(int(p->pos.x / quadSizeX), numQuadsX - 1)),
-		std::max(0, std::min(int(p->pos.z / quadSizeZ), numQuadsZ - 1))
-	};
+	int2 newCellCoors;
+	newCellCoors.x = std::max(0, std::min(int(p->pos.x / quadSizeX), numQuadsX - 1));
+	newCellCoors.y = std::max(0, std::min(int(p->pos.z / quadSizeZ), numQuadsZ - 1));
 
 	if (newCellCoors != oldCellCoors) {
 		RemoveProjectile(p);
