@@ -17,20 +17,29 @@
 #include "System/Platform/Misc.h"
 #include "System/Log/ILog.h"
 
-#if !defined(__APPLE__) || !defined(HEADLESS)
-	// SDL_main.h contains a macro that replaces the main function on some OS, see SDL_main.h for details
-	#include <SDL_main.h>
-#endif
-
 #ifdef WIN32
 	#include "lib/SOP/SOP.hpp" // NvOptimus
 	#include "System/FileSystem/FileSystem.h"
 	#include <stdlib.h>
 	#include <process.h>
 	#define setenv(k,v,o) SetEnvironmentVariable(k,v)
+
+	#include <windows.h>	// For the types used in definition of WinMain
 #endif
 
+#if defined(HEADLESS)
+# ifdef _SDL_main_h // Cludge! Attempting to detect whether SDL_main.h was included. The macro checked here is of course not part of SDL public API...
+                    // This check can be safely omitted, just never accidentally include SDL_main.h in this file or any included by it recursively lol.
+#  error _SDL_main_h was found to be defined! See error lines below in the source.                                                  \
+         SDL_main.h must not be included when building Main.cpp of engine-headless, using headlessStubs in place of the 'real' SDL. \
+         The inclusion is forbidden recursively - A header included from (included from, ...) Main.cpp counts!                      \
+         Note that SDL.h itself includes SDL_main.cpp and so must not be included either.
+# endif
+#endif
 
+#if !defined(HEADLESS) // Whereas including SDL_main.h is forbidden on headless, everyone else gets it.
+#include <SDL_main.h>
+#endif
 
 
 int Run(int argc, char* argv[])
