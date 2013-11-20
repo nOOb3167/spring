@@ -392,6 +392,50 @@ else   (MSVC)
 	Message(WARNING "unknown compiler")
 endif ($ENV{CXX} MATCHES "icpc")
 
+Macro    (MsvcTargetAddFlags_VmgMp targetName)
+    # Set flags /vmg and /MP
+    # Workaround required for /MP requires /Gm disabled for a Debug configuration
+    #
+    # = Problem =
+    # Require different flags depending on the configuration used.
+    # MSVC flag setting technique prior to herein introduced changes, with bare "set(CMAKE_CXX_FLAGS ...)", is insufficient.
+    # == Background ==
+    # CMAKE_BUILD_TYPE is an user-modifiable variable used to select a configuration (Debug, Release, ...)
+    #   Makefile based generators will emit a Makefile specialized to the _one_ selected CMAKE_BUILD_TYPE
+    #     BUILD_TYPE used is determined at cmake invocation time
+    #   Visual Studio generator instead emits a Project containing build instruction of _all_ available BUILD_TYPEs
+    #     BUILD_TYPE used is determined by selecting 'Configuration Manager' under the 'Build Menu' in the VS IDE
+    #   CMake's handling of the two BUILD_TYPE selection modes (Makefile specialized emission; All-containing Project allowing dynamic selection)
+    #   is less well designed (ie. VS support was hacked in).
+    #
+    # The most obvious way of setting compiler flags depending on BUILD_TYPE is such (Pseudo):
+    # if (BUILD_TYPE MATCHES Debug) set(CMAKE_CXX_FLAGS extraFlags) endif ()
+    #
+    # The above works for Makefile based generators (If Debug BUILD_TYPE was selected, extraFlags will be used).
+    # Fails on VS generator (If Debug BUILD_TYPE was selected, all IDE-selectable configurations will yes use extraFlags.
+    #                        If other BUILD_TYPE is  selected, all IDE-selectable configurations will not use extraFlags.)
+    #
+    # == Solution ==
+    # Use the per-configuration flag variables available for CMake Targets.
+    # set_target_properties(... LINK_FLAGS_DEBUG ...) will affect the Debug configuration specifically.
+    if    (MSVC)
+        # set /vmg flag to work around small pointer-to-member bug in spring ('creg' uses this functionality)
+        # Small being undefined behaviour casting pointer to member function to unrelated other member function type.
+        # When on MSVC these are known to have different representation depending on what ever I forgot anyway.
+        #   (The article linked from http://yosefk.com/c++fqa/function.html#fqa-33.7 has analysis of different compiler member function representations)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /vmg ")
+        # and enable multi-processor compiling (/MP)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP ")
+        # (MSDN /MP Flag: http://msdn.microsoft.com/en-us/library/vstudio/bb385193.aspx)
+        #   + The /Gm Flag is default for Debug builds.
+        #   + The /Gm Flag disables (conflicts with) /MP.
+        #   = Therefore pass /Gm- , thus disabling the /Gm flag, and allowing /MP operation.
+        set_target_properties("${targetName}" PROPERTIES LINK_FLAGS_DEBUG " /Gm- ")
+    else  (MSVC)
+        MESSAGE(FATAL_ERROR "MSVC specific compiler flag macro MsvcAddFlagsVmgMp invoked when False: 'if (MSVC)'")
+    endif (MSVC)
+EndMacro (MsvcTargetAddFlags_VmgMp targetName)
+
 add_definitions(-DSTREFLOP_SSE) # would break AI compiling, but is undefined in ./AI/CMakeLists.txt
 
 if    (MSVC)

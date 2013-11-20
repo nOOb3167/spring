@@ -46,10 +46,14 @@ LIST(APPEND engineHeadlessLibraries engineaGui)
 
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/assimp/include)
 
-
 ### Build the executable
 ADD_EXECUTABLE(engine-headless ${engineSources} ${ENGINE_ICON})
 TARGET_LINK_LIBRARIES(engine-headless ${engineHeadlessLibraries})
+
+### CXX_FLAGS
+if    (MSVC)
+    MsvcTargetAddFlags_VmgMp(engine-legacy)
+endif (MSVC)
 
 IF    (MSVC)
     # MSVC Undefined symbol error for 'main'

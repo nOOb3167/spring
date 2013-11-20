@@ -64,16 +64,14 @@ LIST(APPEND engineIncludes ${OPENAL_INCLUDE_DIR})
 
 INCLUDE_DIRECTORIES(${engineIncludes})
 
-if   (MSVC)
-	# set vmg flag to work around small pointer-to-member bug in spring
-	# and enable multi-processor compiling
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /vmg /MP")
-endif(MSVC)
-
 ### Build the executable
 ADD_EXECUTABLE(engine-legacy ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON} ${engineHeaders})
 TARGET_LINK_LIBRARIES(engine-legacy ${engineLibraries})
 
+### CXX_FLAGS
+if    (MSVC)
+    MsvcTargetAddFlags_VmgMp(engine-legacy)
+endif (MSVC)
 
 ### Install the executable
 INSTALL(TARGETS engine-legacy DESTINATION ${BINDIR})

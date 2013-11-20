@@ -162,6 +162,11 @@ ADD_EXECUTABLE(engine-dedicated
 	)
 TARGET_LINK_LIBRARIES(engine-dedicated springserver-static)
 
+### CXX_FLAGS
+if    (MSVC)
+    MsvcTargetAddFlags_VmgMp(engine-legacy)
+endif (MSVC)
+
 INSTALL(TARGETS engine-dedicated DESTINATION ${BINDIR})
 
 # Only build & install spring-dedicated executable & dependencies
