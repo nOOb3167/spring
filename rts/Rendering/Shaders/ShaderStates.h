@@ -22,11 +22,11 @@ namespace Shader {
 		// TODO implement (should be either GL_FLOAT_VEC2, GL_INT_SAMPLER_CUBE, ... see GLSLCopyState.cpp)
 		// int uniformType;
 
-		int location = -1; // current glGetUniformLocation
+		int location; // current glGetUniformLocation
 		std::string uniformName;
 
 	public:
-		UniformState(const std::string& name): uniformName(name) {
+		UniformState(const std::string& name): location(-1), uniformName(name) {
 			i[0] = -0xFFFFFF;
 			i[1] = -0xFFFFFF;
 			i[2] = -0xFFFFFF;
