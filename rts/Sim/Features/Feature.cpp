@@ -20,6 +20,7 @@
 #include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
+#include "System/creg/creg_cond.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
