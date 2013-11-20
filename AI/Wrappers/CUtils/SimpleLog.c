@@ -38,8 +38,7 @@ static int logLevel;
 
 static char* simpleLog_createTimeStamp() {
 
-	time_t now;
-	now = time(&now);
+	time_t now = time(&now);
 	struct tm* myTime = localtime(&now);
 	unsigned int maxTimeStampSize = 32;
 	char* timeStamp = (char*) calloc(maxTimeStampSize + 1, sizeof(char));
@@ -50,53 +49,57 @@ static char* simpleLog_createTimeStamp() {
 
 static void simpleLog_out(int level, const char* msg) {
 
+	static char outBuffer[SIMPLELOG_OUTPUTBUFFER_SIZE];
+
 	if (level > logLevel) {
 		return;
 	}
 
-	static char outBuffer[SIMPLELOG_OUTPUTBUFFER_SIZE];
-
-	// format the message
-	const char* logLevel_str = simpleLog_levelToStr(level);
-	if (useTimeStamps) {
-		char* timeStamp = simpleLog_createTimeStamp();
-		SNPRINTF(outBuffer, SIMPLELOG_OUTPUTBUFFER_SIZE, "%s / %s(%i): %s\n",
-				timeStamp, logLevel_str, level, msg);
-		free(timeStamp);
-		timeStamp = NULL;
-	} else {
-		SNPRINTF(outBuffer, SIMPLELOG_OUTPUTBUFFER_SIZE, "%s(%i): %s\n",
-				logLevel_str, level, msg);
-	}
-
-	// try to open the log file
-	FILE* file = NULL;
-	if (logFileInitialized) {
-		file = FOPEN(logFileName, "a");
-	}
-
-	// print the message
-	if (file != NULL) {
-		FPRINTF(file, "%s", outBuffer);
-		fclose(file);
-		file = NULL;
-	} else {
-		// fallback method: write to stdout
-		if (level > SIMPLELOG_LEVEL_WARNING || level < 0) {
-			FPRINTF(stdout, "%s", outBuffer);
+	{
+		// format the message
+		const char* logLevel_str = simpleLog_levelToStr(level);
+		if (useTimeStamps) {
+			char* timeStamp = simpleLog_createTimeStamp();
+			SNPRINTF(outBuffer, SIMPLELOG_OUTPUTBUFFER_SIZE, "%s / %s(%i): %s\n",
+					timeStamp, logLevel_str, level, msg);
+			free(timeStamp);
+			timeStamp = NULL;
 		} else {
-			FPRINTF(stderr, "%s", outBuffer);
+			SNPRINTF(outBuffer, SIMPLELOG_OUTPUTBUFFER_SIZE, "%s(%i): %s\n",
+					logLevel_str, level, msg);
+		}
+	}
+
+	{
+		// try to open the log file
+		FILE* file = NULL;
+		if (logFileInitialized) {
+			file = FOPEN(logFileName, "a");
+		}
+
+		// print the message
+		if (file != NULL) {
+			FPRINTF(file, "%s", outBuffer);
+			fclose(file);
+			file = NULL;
+		} else {
+			// fallback method: write to stdout
+			if (level > SIMPLELOG_LEVEL_WARNING || level < 0) {
+				FPRINTF(stdout, "%s", outBuffer);
+			} else {
+				FPRINTF(stderr, "%s", outBuffer);
+			}
 		}
 	}
 }
 
 static void simpleLog_logv(int level, const char* fmt, va_list argp) {
 
+	static char outBuffer[SIMPLELOG_OUTPUTBUFFER_SIZE];
+
 	if (level > logLevel) {
 		return;
 	}
-
-	static char outBuffer[SIMPLELOG_OUTPUTBUFFER_SIZE];
 
 	VSNPRINTF(outBuffer, SIMPLELOG_OUTPUTBUFFER_SIZE, fmt, argp);
 	simpleLog_out(level, outBuffer);
@@ -106,46 +109,50 @@ void simpleLog_init(const char* _logFileName, bool _useTimeStamps,
 		int _logLevel, bool append) {
 
 	if (_logFileName != NULL) {
-		logFileInitialized = false;
 		bool initOk = true;
+		logFileInitialized = false;
 		STRCPY_T(logFileName, logFileName_sizeMax, _logFileName);
 
-		// make sure the dir of the log file exists
-		char* logFileDir = util_allocStrCpy(logFileName);
-		if (initOk && !util_getParentDir(logFileDir)) {
-			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-					"Failed to evaluate the parent dir of the config file: %s",
-					logFileName);
-			initOk = false;
-		}
-
-		if (initOk && !util_makeDir(logFileDir, true)) {
-			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-					"Failed to create the parent dir of the config file: %s",
-					logFileDir);
-			initOk = false;
-		}
-
-		free(logFileDir);
-
-		// delete the logFile, and try writing to it
-		FILE* file = NULL;
-		if (initOk && (logFileName != NULL)) {
-			if (append) {
-				file = FOPEN(logFileName, "a");
-			} else {
-				file = FOPEN(logFileName, "w");
+		{
+			// make sure the dir of the log file exists
+			char* logFileDir = util_allocStrCpy(logFileName);
+			if (initOk && !util_getParentDir(logFileDir)) {
+				simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+						"Failed to evaluate the parent dir of the config file: %s",
+						logFileName);
+				initOk = false;
 			}
+
+			if (initOk && !util_makeDir(logFileDir, true)) {
+				simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+						"Failed to create the parent dir of the config file: %s",
+						logFileDir);
+				initOk = false;
+			}
+
+			free(logFileDir);
 		}
-		if (file != NULL) {
-			// make the file empty
-			FPRINTF(file, "%s", "");
-			fclose(file);
-			file = NULL;
-		} else {
-			// report the error to stderr
-			FPRINTF(stderr, "Failed writing to the log file \"%s\".\n%s",
-					logFileName, "We will continue logging to stdout.");
+
+		{
+			// delete the logFile, and try writing to it
+			FILE* file = NULL;
+			if (initOk && (logFileName != NULL)) {
+				if (append) {
+					file = FOPEN(logFileName, "a");
+				} else {
+					file = FOPEN(logFileName, "w");
+				}
+			}
+			if (file != NULL) {
+				// make the file empty
+				FPRINTF(file, "%s", "");
+				fclose(file);
+				file = NULL;
+			} else {
+				// report the error to stderr
+				FPRINTF(stderr, "Failed writing to the log file \"%s\".\n%s",
+						logFileName, "We will continue logging to stdout.");
+			}
 		}
 
 		useTimeStamps = _useTimeStamps;
@@ -163,11 +170,11 @@ void simpleLog_init(const char* _logFileName, bool _useTimeStamps,
 
 void simpleLog_logL(int level, const char* fmt, ...) {
 
+	va_list argp;
+
 	if (level > logLevel) {
 		return;
 	}
-
-	va_list argp;
 
 	va_start(argp, fmt);
 	simpleLog_logv(level, fmt, argp);
@@ -177,12 +184,11 @@ void simpleLog_logL(int level, const char* fmt, ...) {
 void simpleLog_log(const char* fmt, ...) {
 
 	static const int level = SIMPLELOG_LEVEL_NORMAL;
+	va_list argp;
 
 	if (level > logLevel) {
 		return;
 	}
-
-	va_list argp;
 
 	va_start(argp, fmt);
 	simpleLog_logv(level, fmt, argp);

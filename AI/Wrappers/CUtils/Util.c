@@ -45,18 +45,23 @@ char* util_allocStr(unsigned int length) {
 }
 
 char* util_allocStrCpy(const char* toCopy) {
+	size_t copy_sizeMax;
+	char* copy;
 
 	if (toCopy == NULL) {
 		return NULL;
 	}
 
-	const size_t copy_sizeMax = strlen(toCopy) + 1;
-	char* copy = (char*) calloc(copy_sizeMax, sizeof(char));
+	copy_sizeMax = strlen(toCopy) + 1;
+	copy = (char*) calloc(copy_sizeMax, sizeof(char));
 	STRCPY_T(copy, copy_sizeMax, toCopy);
 	return copy;
 }
 
 char* util_allocStrSubCpy(const char* toCopy, int fromPos, int toPos) {
+	unsigned int i;
+	unsigned int newSize;
+	char* copy;
 
 	if (toPos < 0) {
 		toPos = strlen(toCopy);
@@ -66,9 +71,8 @@ char* util_allocStrSubCpy(const char* toCopy, int fromPos, int toPos) {
 		return NULL;
 	}
 
-	unsigned int newSize = toPos - fromPos;
-	char* copy = (char*) calloc(newSize+1, sizeof(char));
-	unsigned int i;
+	newSize = toPos - fromPos;
+	copy = (char*) calloc(newSize+1, sizeof(char));
 	for (i=0; i < newSize; ++i) {
 		copy[i] = toCopy[fromPos + i];
 	}
@@ -166,6 +170,9 @@ char* util_allocStrCatFSPath(int numParts, const char* first, ...) {
 	size_t length = 0;
 	int si;
 
+	char thisChar;
+	char lastChar;
+
 	// Find the maximum of the total memory required.
 	va_start(args, first);
 	for (str = first, si = 0; si < numParts; ++si,
@@ -181,8 +188,7 @@ char* util_allocStrCatFSPath(int numParts, const char* first, ...) {
 	// native optimization of strcat() if any.
 	result = util_allocStr(length);
 	p = result;
-	char thisChar;
-	char lastChar = '\0';
+	lastChar = '\0';
 	va_start(args, first);
 	for (str = first, si = 0; si < numParts; ++si,
 			((str) = (const char *) va_arg(args, const char*))) {
@@ -234,13 +240,15 @@ bool util_isWhiteSpace(char c) {
 
 void util_strLeftTrim(char* toTrim) {
 
+	char* first = toTrim;
+	int   num   = 0;
+	int   len;
+
 	if (toTrim == NULL) {
 		return;
 	}
 
-	int len = strlen(toTrim);
-	char* first = toTrim;
-	int num = 0;
+	len = strlen(toTrim);
 
 	// find leading white spaces
 	while (*first != '\0') {
@@ -263,12 +271,15 @@ void util_strLeftTrim(char* toTrim) {
 }
 void util_strRightTrim(char* toTrim) {
 
+	int len;
+	char* last;
+
 	if (toTrim == NULL) {
 		return;
 	}
 
-	int len = strlen(toTrim);
-	char* last = toTrim - 1 + len;
+	len = strlen(toTrim);
+	last = toTrim - 1 + len;
 
 	// find trailing white spaces
 	while (last > toTrim) {
@@ -315,30 +326,34 @@ char* util_allocStrReplaceStr(const char* toChange, const char* toFind,
 		found = strstr(found+1, toFind);
 	}
 
-	int toChange_len = strlen(toChange);
-	int toFind_len = strlen(toFind);
-	int replacer_len = strlen(replacer);
+	{
+		int toChange_len = strlen(toChange);
+		int toFind_len   = strlen(toFind);
+		int replacer_len = strlen(replacer);
 
-	// evaluate the result strings length
-	unsigned int result_len =
-			toChange_len + (numFinds * (replacer_len - toFind_len));
-	char* result = util_allocStr(result_len);
-	result[0] = '\0';
+		// evaluate the result strings length
+		unsigned int result_len =
+				toChange_len + (numFinds * (replacer_len - toFind_len));
 
-	const char* endLastFound = toChange;
-	for (found = strstr(endLastFound, toFind); found != NULL; ) {
-		STRNCAT(result, endLastFound, (found - toChange));
-		STRCAT(result, replacer);
-		endLastFound = found + toFind_len;
-		found = strstr(found+1, toFind);
+		const char* endLastFound = toChange;
+		char*       result       = util_allocStr(result_len);
+		result[0] = '\0';
+
+		for (found = strstr(endLastFound, toFind); found != NULL; ) {
+			STRNCAT(result, endLastFound, (found - toChange));
+			STRCAT(result, replacer);
+			endLastFound = found + toFind_len;
+			found = strstr(found+1, toFind);
+		}
+		STRNCAT(result, endLastFound, (toChange + toChange_len - endLastFound));
+
+		return result;
 	}
-	STRNCAT(result, endLastFound, (toChange + toChange_len - endLastFound));
-
-	return result;
 }
 
 bool util_startsWith(const char* str, const char* prefix) {
 
+	unsigned int i;
 	bool startsWith = false;
 
 	const unsigned int l_str = strlen(str);
@@ -347,7 +362,6 @@ bool util_startsWith(const char* str, const char* prefix) {
 	if (l_str >= l_prefix) {
 		startsWith = true;
 
-		unsigned int i;
 		for (i=0; i < l_prefix; ++i) {
 			if (str[i] != prefix[i]) {
 				startsWith = false;
@@ -360,6 +374,7 @@ bool util_startsWith(const char* str, const char* prefix) {
 }
 bool util_endsWith(const char* str, const char* suffix) {
 
+	unsigned int i;
 	bool endsWith = false;
 
 	const unsigned int l_str = strlen(str);
@@ -368,7 +383,6 @@ bool util_endsWith(const char* str, const char* suffix) {
 	if (l_str >= l_suffix) {
 		endsWith = true;
 
-		unsigned int i;
 		for (i = 1; i <= l_suffix; ++i) {
 			if (str[l_str - i] != suffix[l_suffix - i]) {
 				endsWith = false;
@@ -382,13 +396,13 @@ bool util_endsWith(const char* str, const char* suffix) {
 
 bool util_strToBool(const char* str) {
 
+	bool  res  = true;
+	char* strT = util_allocStrTrimed(str);
+
 	if (str == NULL) {
 		return false;
 	}
 
-	bool res = true;
-
-	char* strT = util_allocStrTrimed(str);
 	if (strcmp(strT, "0") == 0
 			|| strcmp(strT, "NO") == 0
 			|| strcmp(strT, "No") == 0
@@ -423,46 +437,39 @@ static unsigned int util_listFilesRec(const char* dir, const char* suffix,
 		char** fileNames, bool recursive, const unsigned int maxFileNames,
 		unsigned int numFileNames, const char* relPath) {
 
+	struct _finddata_t fileInfo;
+	int handle;
+
 	if (numFileNames >= maxFileNames) {
 		return numFileNames;
 	}
 
-	struct _finddata_t fileInfo;
-	int handle;
-
-	// look for files which end in: suffix
-	char* suffixFilesSpec = util_allocStrCat(3, dir, "\\*", suffix);
-	handle = _findfirst(suffixFilesSpec, &fileInfo);
-	if (handle != -1L) {
-		if (util_isFile(&fileInfo)) {
-			fileNames[numFileNames++] = util_allocStrCpy(fileInfo.name);
-		}
-		while (_findnext(handle, &fileInfo) == 0
-				&& numFileNames < maxFileNames) {
-			if (util_isFile(&fileInfo)) {
-				fileNames[numFileNames++] = util_allocStrCat(2, relPath, fileInfo.name);
-			}
-		}
-		_findclose(handle);
-	}
-	free(suffixFilesSpec);
-
-	// search in sub-directories
-	if (recursive) {
-		char* subDirsSpec = util_allocStrCat(2, dir, "\\*.*");
-		handle = _findfirst(subDirsSpec, &fileInfo);
+	{
+		// look for files which end in: suffix
+		char* suffixFilesSpec = util_allocStrCat(3, dir, "\\*", suffix);
+		handle = _findfirst(suffixFilesSpec, &fileInfo);
 		if (handle != -1L) {
-			// check if not current or parent directories
-			if (util_isNormalDir(&fileInfo)) {
-				char* subDir = util_allocStrCat(3, dir, "\\", fileInfo.name);
-				char* subRelPath = util_allocStrCat(3, relPath, fileInfo.name, "\\");
-				numFileNames = util_listFilesRec(subDir, suffix, fileNames,
-						recursive, maxFileNames, numFileNames, subRelPath);
-				free(subDir);
-				free(subRelPath);
+			if (util_isFile(&fileInfo)) {
+				fileNames[numFileNames++] = util_allocStrCpy(fileInfo.name);
 			}
 			while (_findnext(handle, &fileInfo) == 0
 					&& numFileNames < maxFileNames) {
+				if (util_isFile(&fileInfo)) {
+					fileNames[numFileNames++] = util_allocStrCat(2, relPath, fileInfo.name);
+				}
+			}
+			_findclose(handle);
+		}
+		free(suffixFilesSpec);
+	}
+
+	{
+		// search in sub-directories
+		if (recursive) {
+			char* subDirsSpec = util_allocStrCat(2, dir, "\\*.*");
+			handle = _findfirst(subDirsSpec, &fileInfo);
+			if (handle != -1L) {
+				// check if not current or parent directories
 				if (util_isNormalDir(&fileInfo)) {
 					char* subDir = util_allocStrCat(3, dir, "\\", fileInfo.name);
 					char* subRelPath = util_allocStrCat(3, relPath, fileInfo.name, "\\");
@@ -471,10 +478,21 @@ static unsigned int util_listFilesRec(const char* dir, const char* suffix,
 					free(subDir);
 					free(subRelPath);
 				}
+				while (_findnext(handle, &fileInfo) == 0
+						&& numFileNames < maxFileNames) {
+					if (util_isNormalDir(&fileInfo)) {
+						char* subDir = util_allocStrCat(3, dir, "\\", fileInfo.name);
+						char* subRelPath = util_allocStrCat(3, relPath, fileInfo.name, "\\");
+						numFileNames = util_listFilesRec(subDir, suffix, fileNames,
+								recursive, maxFileNames, numFileNames, subRelPath);
+						free(subDir);
+						free(subRelPath);
+					}
+				}
+				_findclose(handle);
 			}
-			_findclose(handle);
+			free(subDirsSpec);
 		}
-		free(subDirsSpec);
 	}
 
 	return numFileNames;
@@ -623,10 +641,12 @@ static bool util_makeDirS(const char* dirPath) {
 
 bool util_makeDir(const char* dirPath, bool recursive) {
 
-	char* dirPath_cpy = util_allocStrCpy(dirPath);
-	util_removeTrailingSlash(dirPath_cpy);
+	char* dirPath_cpy;
+	bool  exists;
 
-	bool exists = util_fileExists(dirPath_cpy);
+	dirPath_cpy = util_allocStrCpy(dirPath);
+	util_removeTrailingSlash(dirPath_cpy);
+	exists = util_fileExists(dirPath_cpy);
 
 	if (!exists) {
 		char* parentDir = util_allocStrCpy(dirPath_cpy);
@@ -654,16 +674,18 @@ bool util_getParentDir(char* path) {
 
 	util_removeTrailingSlash(path);
 
-	char* ptr = strrchr(path, '/'); // search char from end reverse
-	if (ptr == NULL) {
-		ptr = strrchr(path, '\\'); // search char from end reverse
+	{
+		char* ptr = strrchr(path, '/'); // search char from end reverse
 		if (ptr == NULL) {
-			return false;
+			ptr = strrchr(path, '\\'); // search char from end reverse
+			if (ptr == NULL) {
+				return false;
+			}
 		}
-	}
 
-	// replace the last '/' or '\\' with an string terminationg char
-	*ptr = '\0';
+		// replace the last '/' or '\\' with an string terminationg char
+		*ptr = '\0';
+	}
 
 	return true;
 }
@@ -686,6 +708,7 @@ bool util_findFile(const char* dirs[], unsigned int numDirs,
 		bool searchOnlyWriteable) {
 
 	bool found = false;
+	unsigned int d;
 
 	if (util_isPathAbsolute(relativeFilePath)) {
 		STRCPY(absoluteFilePath, relativeFilePath);
@@ -696,7 +719,6 @@ bool util_findFile(const char* dirs[], unsigned int numDirs,
 		numDirs = 1;
 	}
 
-	unsigned int d;
 	for (d=0; d < numDirs && !found; ++d) {
 		char* tmpPath = util_allocStrCatFSPath(2, dirs[d], relativeFilePath);
 
@@ -717,6 +739,7 @@ bool util_findDir(const char* dirs[], unsigned int numDirs,
 		bool searchOnlyWriteable, bool create) {
 
 	bool found = false;
+	unsigned int d;
 
 	// check if it is an absolute file path
 	if (util_fileExists(relativeDirPath)) {
@@ -728,7 +751,6 @@ bool util_findDir(const char* dirs[], unsigned int numDirs,
 		numDirs = 1;
 	}
 
-	unsigned int d;
 	for (d=0; d < numDirs && !found; ++d) {
 		char* tmpPath = util_allocStrCatFSPath(2, dirs[d], relativeDirPath);
 
@@ -754,7 +776,7 @@ bool util_findDir(const char* dirs[], unsigned int numDirs,
 	return found;
 }
 
-static inline bool util_isEndOfLine(char c) {
+static bool util_isEndOfLine(char c) {
 	return (c == '\r') || (c == '\n');
 }
 /**
@@ -767,6 +789,9 @@ static bool util_parseProperty(const char* propLine,
 	const unsigned int len = strlen(propLine);
 	unsigned int pos = 0; // current pos
 	char c; // current char
+
+	int keyStartPos;
+	char* key;
 
 	// skip white spaces
 	while (pos < len) {
@@ -795,16 +820,18 @@ static bool util_parseProperty(const char* propLine,
 	// if not: bad properties file format
 
 	// read the key
-	int keyStartPos = pos;
-	char* key = NULL;
+	keyStartPos = pos;
+	key = NULL;
 	while (pos < len) {
 		c = propLine[pos];
-		bool wb = util_isWhiteSpace(c);
-		bool es = (c == '=');
-		if (!wb && !es) {
-			pos++;
-		} else {
-			break;
+		{
+			bool wb = util_isWhiteSpace(c);
+			bool es = (c == '=');
+			if (!wb && !es) {
+				pos++;
+			} else {
+				break;
+			}
 		}
 	}
 	key = util_allocStrSubCpy(propLine, keyStartPos, pos);
@@ -844,49 +871,53 @@ static bool util_parseProperty(const char* propLine,
 		}
 	}
 
-	// read the value
-	int valueStartPos = pos;
-	char* value = NULL;
-	while (pos < len) {
-		c = propLine[pos];
-		bool eol = util_isEndOfLine(c);
-		if (!eol) {
-			pos++;
-		} else {
-			break;
+	{
+		// read the value
+		int valueStartPos = pos;
+		char* value = NULL;
+		while (pos < len) {
+			c = propLine[pos];
+			{
+				bool eol = util_isEndOfLine(c);
+				if (!eol) {
+					pos++;
+				} else {
+					break;
+				}
+			}
 		}
-	}
-	value = util_allocStrSubCpy(propLine, valueStartPos, pos);
+		value = util_allocStrSubCpy(propLine, valueStartPos, pos);
 
-	keys[propStoreIndex] = key;
-	values[propStoreIndex] = value;
+		keys[propStoreIndex] = key;
+		values[propStoreIndex] = value;
+	}
 
 	return true;
 }
 int util_parsePropertiesFile(const char* propertiesFile,
 		const char* keys[], const char* values[], int maxProperties) {
-
+#define util_parsePropertiesFile_MAX_LINE_LENGTH 2048
 	int numProperties = 0;
 
-	static const int maxLineLength = 2048;
 	FILE* file;
-	char line[maxLineLength + 1];
+	char line[util_parsePropertiesFile_MAX_LINE_LENGTH + 1];
 
 	file = fopen(propertiesFile , "r");
 	if (file == NULL) {
 		return numProperties;
 	}
 
-	char* error = NULL;
-	bool propertyFound = false;
 	while (numProperties < maxProperties) {
 		// returns NULL on error or EOF
-		error = fgets(line, maxLineLength + 1, file);
+		char* error = fgets(line, util_parsePropertiesFile_MAX_LINE_LENGTH + 1, file);
+		bool propertyFound = false;
+		int lci;
+
 		if (error == NULL) {
 			break;
 		}
 		// remove EOL chars
-		int lci = strlen(line)-1;
+		lci = strlen(line)-1;
 		while (lci >= 0 && util_isEndOfLine(line[lci])) {
 			line[lci] = '\0';
 			lci--;
@@ -899,6 +930,7 @@ int util_parsePropertiesFile(const char* propertiesFile,
 	fclose(file);
 
 	return numProperties;
+#undef util_parsePropertiesFile_MAX_LINE_LENGTH
 }
 
 const char* util_map_getValueByKey(
