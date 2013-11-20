@@ -10,10 +10,6 @@
 #include "lib/streflop/streflop_cond.h"
 #include "System/maindefines.h"
 
-#ifdef _MSC_VER
-#define __builtin_sqrtf streflop::sqrtf
-#endif
-
 #ifdef __GNUC__
 	#define _const __attribute__((const))
 	#define _pure __attribute__((pure))
@@ -143,13 +139,13 @@ namespace fastmath {
 	/** Calculate sqrt using builtin sqrtf. */
 	inline float sqrt(float x)
 	{
-		return __builtin_sqrtf(x);
+		return BUILTIN_SQRTF(x);
 	}
 
 	/** Calculate sqrt using builtin sqrtf. */
 	inline float sqrt2(float x)
 	{
-		return __builtin_sqrtf(x);
+		return BUILTIN_SQRTF(x);
 	}
 
 	/**

@@ -9,6 +9,20 @@
 #ifndef STREFLOP_COND_H
 #define STREFLOP_COND_H
 
+// BUILTIN_SQRTF, currently used only in FastMath.h
+// Defined here not to spread the 'if defined...' streflop detection chain into other files
+//   __builtin_sqrtf is a GCC intrinsic
+//   Just use the streflop sqrtf (Or normal sqrtf) on MSVC
+#ifdef _MSC_VER
+# if (defined(STREFLOP_X87) || defined(STREFLOP_SSE) || defined(STREFLOP_SOFT)) && (!defined(NOT_USING_STREFLOP))
+#  define BUILTIN_SQRTF streflop::sqrtf
+# else
+#  define BUILTIN_SQRTF sqrtf
+# endif
+#else
+# define BUILTIN_SQRTF __builtin_sqrtf
+#endif
+
 #if (defined(STREFLOP_X87) || defined(STREFLOP_SSE) || defined(STREFLOP_SOFT)) && (!defined(NOT_USING_STREFLOP))
 #include "streflop.h"
 namespace math {
