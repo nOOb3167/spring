@@ -65,3 +65,6 @@ if    (MINGW)
 	install(FILES ${PTHREADGC2_LIBRARY} DESTINATION ${BINDIR})
 endif (MINGW)
 
+if    (MSVC)
+	install (DIRECTORY "${MINGWLIBS}/dllMSVC/" DESTINATION "${BINDIR}" PATTERN "*.dll")
+endif (MSVC)
