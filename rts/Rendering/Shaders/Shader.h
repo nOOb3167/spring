@@ -12,7 +12,7 @@
 
 
 
-constexpr size_t hashString(const char* str, size_t hash = 5381)
+static size_t hashString(const char* str, size_t hash = 5381)
 {
 	return (*str) ? hashString(str + 1, hash + (hash << 5) + *str) : hash;
 }
