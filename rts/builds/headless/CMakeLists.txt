@@ -12,7 +12,7 @@ ADD_DEFINITIONS(-DNO_SOUND)
 ADD_DEFINITIONS(-DBITMAP_NO_OPENGL)
 REMOVE_DEFINITIONS(-DAVI_CAPTURING)
 
-IF    (MINGW OR APPLE)
+IF    (MSVC OR MINGW OR APPLE)
 	# Windows:
 	# We still need these header files,
 	# even if we are not going to link with gl, glu and SDL.
@@ -23,12 +23,17 @@ IF    (MINGW OR APPLE)
 	FIND_PACKAGE(OpenGL REQUIRED)
 	FIND_PACKAGE(SDL REQUIRED)
 	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
-ELSE  (MINGW OR APPLE)
+	IF	  (MSVC)
+		# The glext.h is Khronos supplied (See "Table 5. GL on Microsoft Windows" http://www.khronos.org/registry/implementers_guide.html),
+		# add include to then use this 'direct copy' (See comment below) of the glext.h header.
+		INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/GLextKhronos)
+	ENDIF (MSVC)
+ELSE  (MSVC OR MINGW OR APPLE)
 	# Use a direct copy of the GL and SDL headers,
 	# as these may not be available on headless systems.
 	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include)
 	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/SDL)
-ENDIF (MINGW OR APPLE)
+ENDIF (MSVC OR MINGW OR APPLE)
 
 
 # headlessstubs are our stubs that replace libGL, libGLU, libGLEW, libSDL (yes really!)

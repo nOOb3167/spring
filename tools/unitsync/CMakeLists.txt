@@ -21,17 +21,22 @@ IF (WIN32)
 	LIST(APPEND unitsync_libs ${WINMM_LIBRARY})
 ENDIF (WIN32)
 
-IF    (MINGW)
+IF    (MINGW OR MSVC)
 	# We still need these header files,
 	# even if we are not going to link with SDL.
 	# We have them available anyway (mingwlibs).
 	FIND_PACKAGE(SDL REQUIRED)
 	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
-ELSE  (MINGW)
+	IF	  (MSVC)
+		# The glext.h is Khronos supplied (See "Table 5. GL on Microsoft Windows" http://www.khronos.org/registry/implementers_guide.html),
+		# add include to then use this 'direct copy' (See comment below) of the glext.h header.
+		INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/GLextKhronos)
+	ENDIF (MSVC)
+ELSE  (MINGW OR MSVC)
 	# Use a direct copy of the GL and SDL headers,
 	# as these may not be available on headless systems.
 	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/SDL)
-ENDIF (MINGW)
+ENDIF (MINGW OR MSVC)
 
 
 ADD_DEFINITIONS(-DUNITSYNC)
