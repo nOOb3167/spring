@@ -35,6 +35,17 @@ Else  ("${CMAKE_BUILD_TYPE}" MATCHES "^DEBUG")
 	Set(DEBUG_BUILD FALSE)
 EndIf ("${CMAKE_BUILD_TYPE}" MATCHES "^DEBUG")
 
+if (MSVC OR MSVC_IDE)
+  if     (MSVC_VERSION LESS 1700)
+    message(FATAL_ERROR "VS2012 With CTP Required (v120_CTP_Nov2012).")
+  elseif (MSVC_VERSION EQUAL 1700)
+    message("Using VS2012 With CTP (v120_CTP_Nov2012)")
+    set(CMAKE_GENERATOR_TOOLSET "v120_CTP_Nov2012" CACHE STRING "Platform Toolset" FORCE)
+  else   (MSVC_VERSION GREATER 1700)
+    # Nothing
+  endif  (MSVC_VERSION LESS 1700)
+endif(MSVC OR MSVC_IDE)
+
 # MSVC needs the default flags
 if(NOT MSVC)
 	### Strip C[XX]_FLAGS
