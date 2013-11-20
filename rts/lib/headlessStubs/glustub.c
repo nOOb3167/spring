@@ -27,8 +27,12 @@ extern "C" {
 
 // #include <stdio.h>
 
+# ifdef _MSC_VER
+#  undef  GLAPI
+#  define GLAPI		// APIENTRY is already __stdcall. Having __stdcall at start of the definitions below (Via GLAPI) causes syntax errors.
+# endif
 
-GLAPI GLUquadric* APIENTRY gluNewQuadric() {
+GLAPI GLUquadric * APIENTRY gluNewQuadric(void) {
    return 0;
 }
 
