@@ -30,6 +30,7 @@ namespace math {
 }
 #else
 #include <cmath>
+#include <limits> // std::numeric_limits
 
 #ifdef __APPLE__
 // macosx's cmath doesn't include c++11's std::hypot yet (tested 2013)
