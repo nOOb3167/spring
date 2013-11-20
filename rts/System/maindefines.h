@@ -61,7 +61,7 @@
 		#define STRCAT    strcat
 		#define STRCATS   strcat_s
 		#define STRNCAT   strncat
-		#define FOPEN     fopen_s
+		#define FOPEN     fopen		// Was fopen_s but signatures do not match
 	#else              // Visual Studio 2003
 		#define PRINTF    _printf
 		#define FPRINTF   _fprintf
