@@ -121,7 +121,6 @@ else  (UNIX AND NOT MINGW)
 		MESSAGE(FATAL_ERROR "MINGWLIBS '${MINGWLIBS}' is not a valid directory")
 	endif (NOT EXISTS "${MINGWLIBS}" OR NOT IS_DIRECTORY "${MINGWLIBS}")
 
-	set(CMAKE_PREFIX_PATH ${MINGWLIBS})
 	if   (MSVC)
 		add_definitions(-D_WIN32_WINNT=0x502) ## vista is minimum due to InterlockedIncrement64
 	else (MSVC)
@@ -129,6 +128,7 @@ else  (UNIX AND NOT MINGW)
 	endif(MSVC)
 
 	# some cross-compile fixes
+	set(CMAKE_PREFIX_PATH "/")
 	set(CMAKE_FIND_ROOT_PATH ${MINGWLIBS} ${CMAKE_FIND_ROOT_PATH})
 	set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 	set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
